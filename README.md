@@ -1,40 +1,21 @@
-### PMA Gameplan
+# PMA_Gameplan
 
-PMA internal collaboration & planning system
+Custom Frappe application built on the Frappe Framework to manage PMA members,
+posts, and internal collaboration using role-based access control.
 
-### Installation
+## Features
+- PMA Admin and PMA Member roles
+- Custom Desk pages
+- Secure backend APIs
+- Controlled content visibility
 
-You can install this app using the [bench](https://github.com/frappe/bench) CLI:
+## Tech Stack
+- Frappe Framework
+- Python
+- JavaScript, HTML, CSS
 
+## Installation
 ```bash
-cd $PATH_TO_YOUR_BENCH
-bench get-app $URL_OF_THIS_REPO --branch developer
-bench install-app pma_gameplan
-```
+bench get-app https://github.com/nandanisingh26/pma_gameplan.git
+bench --site your-site install-app pma_gameplan
 
-### Contributing
-
-This app uses `pre-commit` for code formatting and linting. Please [install pre-commit](https://pre-commit.com/#installation) and enable it for this repository:
-
-```bash
-cd apps/pma_gameplan
-pre-commit install
-```
-
-Pre-commit is configured to use the following tools for checking and formatting your code:
-
-- ruff
-- eslint
-- prettier
-- pyupgrade
-### CI
-
-This app can use GitHub Actions for CI. The following workflows are configured:
-
-- CI: Installs this app and runs unit tests on every push to `develop` branch.
-- Linters: Runs [Frappe Semgrep Rules](https://github.com/frappe/semgrep-rules) and [pip-audit](https://pypi.org/project/pip-audit/) on every pull request.
-
-
-### License
-
-mit
