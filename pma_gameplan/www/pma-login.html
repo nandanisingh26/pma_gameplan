@@ -1,0 +1,115 @@
+{% extends "templates/web.html" %}
+
+{% block head_include %}
+<link rel="stylesheet" href="/assets/pma_gameplan/css/pma-login.css">
+{% endblock %}
+
+{% block page_content %}
+
+{% if frappe.session.user != "Guest" %}
+<script>
+window.location.href = "/desk/pma-gameplan";
+</script>
+{% endif %}
+
+<div class="pma-login-container">
+
+<!-- LEFT -->
+<div class="pma-login-left">
+<h1>Welcome to PMA Gameplan</h1>
+<p>
+Collaborate, plan, and execute with clarity.
+Your internal workspace for smarter teamwork.
+</p>
+</div>
+
+<!-- RIGHT -->
+<div class="pma-login-right">
+<h3>User Login</h3>
+
+<div class="pma-field">
+<input id="email" placeholder="Email">
+</div>
+
+<small id="email-error" style="color:#ffb3b3"></small>
+
+<script>
+const allowedDomains = ["pma.com", "pmaindia.com"];
+
+const emailInput = document.querySelector("input[name='email']");
+const emailError = document.getElementById("email-error");
+
+emailInput.addEventListener("input", function () {
+  const value = emailInput.value.toLowerCase();
+
+  if (!value.includes("@")) {
+    emailError.textContent = "";
+    return;
+  }
+
+  const domain = value.split("@").pop();
+
+  if (!allowedDomains.includes(domain)) {
+    emailError.textContent = "Use your company email only";
+  } else {
+    emailError.textContent = "";
+  }
+});
+
+/* Block submit if invalid */
+document.getElementById("pma-register-form").addEventListener("submit", function (e) {
+  const value = emailInput.value.toLowerCase();
+  const domain = value.split("@").pop();
+
+  if (!allowedDomains.includes(domain)) {
+    e.preventDefault();
+    frappe.msgprint("Registration allowed only with company email address");
+  }
+});
+</script>
+
+<div class="pma-field">
+<input id="password" type="password" placeholder="Password">
+</div>
+
+<div class="text-center mt-3">
+  <a href="/forgot-password">Forgot password?</a>
+</div>
+
+<button class="pma-login-btn" onclick="login()">Login</button>
+</div>
+
+</div>
+
+<script>
+frappe.csrf_token = "{{ csrf_token }}";
+
+function login() {
+const email = document.getElementById("email").value;
+const password = document.getElementById("password").value;
+
+frappe.call({
+method: "pma_gameplan.auth.check_user_exists",
+args: { email },
+callback(r) {
+if (!r.message.exists) {
+window.location.href = "/pma-register";
+return;
+}
+
+frappe.call({
+method: "login",
+args: { usr: email, pwd: password },
+error() {
+frappe.msgprint("Invalid email or password");
+},
+callback() {
+window.location.href = "/desk/pma-gameplan";
+}
+});
+}
+});
+}
+</script>
+
+{% endblock %}

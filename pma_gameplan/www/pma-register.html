@@ -1,0 +1,358 @@
+{% extends "templates/web.html" %}
+
+{% block navbar %}{% endblock %}
+{% block header %}{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block page_content %}
+
+
+<style>
+  .pma-register-wrapper {
+    min-height: 80vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .pma-register-card {
+    width: 100%;
+    max-width: 520px;
+    padding: 28px 26px;
+    border-radius: 12px;
+    background: linear-gradient(
+      135deg,
+      rgb(38, 77, 41),
+      rgb(58, 110, 65)
+    );
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  }
+
+  .pma-register-card h3 {
+    color: #fff;
+    margin-bottom: 22px;
+  }
+
+  .pma-register-card .form-control,
+  .pma-register-card select {
+    background: #f6f6f6;
+    border: none;
+    border-radius: 8px;
+  }
+
+  .pma-register-card .btn-primary {
+    background: #111;
+    border: none;
+    border-radius: 8px;
+  }
+
+  .pma-register-card a {
+    color: #e6ffe9;
+    font-size: 14px;
+  }
+
+  .toggle-password {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 16px;
+    user-select: none;
+    opacity: 0.7;
+  }
+
+  .password-strength {
+    height: 6px;
+    background: #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .strength-bar {
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  .strength-weak {
+    background: #e74c3c;
+    width: 33%;
+  }
+
+  .strength-medium {
+    background: #f1c40f;
+    width: 66%;
+  }
+
+  .strength-strong {
+    background: #2ecc71;
+    width: 100%;
+  }
+
+  #strength-text,
+  #match-text {
+    font-size: 12px;
+  }
+
+  .toggle-password:hover {
+    opacity: 1;
+  }
+
+  /*Full-page flexible centering*/
+  .pma-register-page{
+    min-height: 100vh;
+    display: flex;
+    align-items: center;     /*vertical centering*/
+    justify-content: center;  /*horizontal centering*/
+    padding: 24px 16px;        /*breathing room on small screens*/
+    box-sizing: border-box;
+  }
+
+  /*Card stays responsive*/
+  .pma-register-card { 
+    width: 100%;
+    max-width: 420px;            /*adjust if needed*/
+  }
+
+  /*Mobile safety*/
+  @media (max-height: 700px) {
+    .pma-register-page{
+        align-items: flex-start; /*avoids cut-off on short screens*/
+        padding-top: 32px;
+        padding-bottom: 32px;
+    }
+  }
+
+
+
+</style>
+
+<div class="pma-register-wrapper">
+  <div class="pma-register-card">
+
+    <form id="pma-register-form">
+      <h3 class="text-center">Create your PMA Gameplan account</h3>
+
+      <div class="form-group">
+        <input class="form-control" name="first_name" placeholder="First Name" required>
+      </div>
+
+      <div class="form-group">
+        <input class="form-control" name="last_name" placeholder="Last Name" required>
+      </div>
+
+      <div class="form-group">
+        <input type="email" class="form-control" name="email" placeholder="Email" required>
+      </div>
+
+      <div class="form-group position-relative">
+        <input
+        type="password"
+        class="form-control"
+        id="reg-password"
+        name="password"
+        placeholder="Password"
+        required
+        oninput="checkPasswordStrength()"
+        >
+        <span class="toggle-password" onclick="togglePassword()">👁️</span>
+        <div class="password-strength mt-1">
+            <div class="strength-bar"></div>
+            <small id="strength-text"></small>
+        </div>
+       </div>
+       <div class="form-group">
+        <input
+        type="password"
+        class="form-control"
+        id="confirm-password"
+        placeholder="Confirm Password"
+        required
+        oninput="checkPasswordMatch()"
+        >
+        <small id="match-text"></small>
+       </div>
+
+      <div class="form-group">
+        <select class="form-control" name="gender">
+          <option value="">Gender</option>
+          <option>Male</option>
+          <option>Female</option>
+        </select>
+      </div>
+
+      <div class="form-group d-flex">
+        <select class="form-control mr-2" name="country_code" style="max-width:90px">
+          <option>+91</option>
+          <option>+49</option>
+          <option>+86</option>
+        </select>
+        <input class="form-control" name="mobile" placeholder="Mobile Number">
+      </div>
+
+      <div class="form-group">
+        <select class="form-control" name="role" placeholder="Role">
+        <option value="">Role</option>
+        <option>Gameplan Admin</option>
+        <option>Gameplan Member</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <input class="form-control" name="reporting_manager" placeholder="Reporting Manager">
+      </div>
+
+      <div class="form-group">
+        <select class="form-control" name="country">
+          <option value="">Country</option>
+          <option>India (Bangalore)</option>
+          <option>India (Chennai)</option>
+          <option>Europe</option>
+          <option>Germany</option>
+          <option>China</option>
+        </select>
+      </div>
+
+      <!-- Space -->
+<div class="form-group">
+  <select class="form-control" name="space" id="space-select" onchange="handleSpaceChange()">
+    <option value="">Space</option>
+    <option value="Department">Department</option>
+    <option value="Branch">Branch</option>
+  </select>
+</div>
+
+<!-- Sub Space (Department options) -->
+<div class="form-group" id="department-wrapper" style="display:none;">
+  <select class="form-control" name="department" id="department-select">
+    <option value="">Select Department</option>
+    <option value="Design">Design</option>
+    <option value="Developer">Developer</option>
+    <option value="IT">IT</option>
+    <option value="Finance">Finance</option>
+    <option value="HR">HR</option>
+  </select>
+</div>
+
+      <div class="form-group">
+        <select class="form-control" name="employment_type">
+          <option value="">Employment Type</option>
+          <option>Full-time</option>
+          <option>Part-time</option>
+          <option>Contract</option>
+          <option>Intern</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">
+        Create Account
+      </button>
+
+      <div class="text-center mt-3">
+        <a href="/pma-login">Already have an account? Back to login</a>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<script>
+document.getElementById("pma-register-form").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(this));
+
+  frappe.call({
+    method: "pma_gameplan.api.register_gameplan_member",
+    args: data,
+    callback() {
+      window.location.href = "/pma-login";
+    }
+  });
+});
+</script>
+<script>
+function togglePassword() {
+  const input = document.getElementById("reg-password");
+  input.type = input.type === "password" ? "text" : "password";
+}
+
+function checkPasswordStrength() {
+  const password = document.getElementById("reg-password").value;
+  const bar = document.querySelector(".strength-bar");
+  const text = document.getElementById("strength-text");
+
+  bar.className = "strength-bar";
+  text.textContent = "";
+
+  if (password.length < 6) {
+    bar.classList.add("strength-weak");
+    text.textContent = "Weak password";
+    text.style.color = "#e74c3c";
+  } else if (
+    password.length >= 6 &&
+    /[A-Z]/.test(password) &&
+    /[0-9]/.test(password)
+  ) {
+    bar.classList.add("strength-strong");
+    text.textContent = "Strong password";
+    text.style.color = "#2ecc71";
+  } else {
+    bar.classList.add("strength-medium");
+    text.textContent = "Medium strength";
+    text.style.color = "#f1c40f";
+  }
+
+  checkPasswordMatch();
+}
+
+function checkPasswordMatch() {
+  const pwd = document.getElementById("reg-password").value;
+  const confirm = document.getElementById("confirm-password").value;
+  const text = document.getElementById("match-text");
+
+  if (!confirm) {
+    text.textContent = "";
+    return;
+  }
+
+  if (pwd === confirm) {
+    text.textContent = "Passwords match";
+    text.style.color = "#2ecc71";
+  } else {
+    text.textContent = "Passwords do not match";
+    text.style.color = "#e74c3c";
+  }
+}
+
+/* Block submit if passwords mismatch */
+document.getElementById("pma-register-form").addEventListener("submit", function(e) {
+  const pwd = document.getElementById("reg-password").value;
+  const confirm = document.getElementById("confirm-password").value;
+
+  if (pwd !== confirm) {
+    e.preventDefault();
+    frappe.msgprint("Passwords do not match");
+  }
+});
+</script>
+
+<script>
+function handleSpaceChange() {
+  const space = document.getElementById("space-select").value;
+  const deptWrapper = document.getElementById("department-wrapper");
+  const deptSelect = document.getElementById("department-select");
+
+  if (space === "Department") {
+    deptWrapper.style.display = "block";
+    deptSelect.required = true;
+  } else {
+    deptWrapper.style.display = "none";
+    deptSelect.value = "";
+    deptSelect.required = false;
+  }
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,32 @@
+{
+  "doctype": "DocType",
+  "name": "PMA Post Attachment",
+  "module": "PMA Gameplan",
+  "custom": 0,
+  "istable": 1,
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "fields": [
+    {
+      "fieldname": "file",
+      "label": "File",
+      "fieldtype": "Attach",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "file_name",
+      "label": "File Name",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "file_type",
+      "label": "File Type",
+      "fieldtype": "Data",
+      "read_only": 1
+    }
+  ],
+  "permissions": [],
+  "sort_field": "creation",
+  "sort_order": "DESC"
+}

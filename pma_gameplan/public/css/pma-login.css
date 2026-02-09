@@ -1,0 +1,153 @@
+/* pma-login.css */
+
+body {
+background: linear-gradient(135deg, #6a5af9, #8f6bf4, #ff8fb1);
+min-height: 100vh;
+}
+
+.pma-login-container {
+display: flex;
+width: 90%;
+max-width: 900px;
+min-height: 520px;
+
+background: #fff;
+border-radius: 14px;
+overflow: hidden;
+box-shadow: 0 25px 60px rgba(0,0,0,0.15);
+}
+
+/* LEFT PANEL */
+.pma-login-left {
+flex: 1;
+padding: 60px 50px;
+color: white;
+background: linear-gradient(
+135deg,
+rgb(38, 77, 41),
+rgb(72, 140, 86)
+);
+}
+
+.pma-login-left h1 {
+font-size: 32px;
+margin-bottom: 16px;
+}
+
+.pma-login-left p {
+font-size: 14px;
+line-height: 1.6;
+opacity: 0.9;
+}
+
+/* RIGHT PANEL */
+.pma-login-right {
+flex: 1;
+padding: 60px 50px;
+}
+
+.pma-login-right h3 {
+margin-bottom: 30px;
+font-weight: 600;
+}
+
+.pma-field {
+margin-bottom: 18px;
+}
+
+.pma-field input {
+width: 100%;
+padding: 12px 14px;
+border-radius: 8px;
+border: 1px solid #ddd;
+font-size: 14px;
+}
+
+.pma-field input:focus {
+outline: none;
+border-color: #6a5af9;
+}
+
+.pma-login-btn {
+width: 100%;
+margin-top: 10px;
+padding: 12px;
+border: none;
+border-radius: 20px;
+background: linear-gradient(135deg,rgb(38, 77, 41), rgb(92, 160, 105));
+color: white;
+font-size: 14px;
+cursor: pointer;
+}
+
+.pma-login-btn:hover {
+opacity: 0.9;
+}
+
+/* ---- REMOVE FRAPPE WEBSITE CHROME ---- */
+
+/* hide top navbar */
+.navbar,
+.web-footer,
+.footer-powered {
+display: none !important;
+}
+
+/* remove page padding & white background */
+.web-page-content {
+padding: 0 !important;
+}
+
+html,
+body {
+margin: 0;
+padding: 0;
+height: 100%;
+}
+
+body {
+display: flex;
+align-items: center;
+justify-content: center;
+
+background: linear-gradient(
+135deg,
+rgb(38, 77, 41),
+rgb(56, 115, 63),
+rgb(92, 160, 105)
+);
+}
+
+/* force full height */
+html,
+body,
+.web-page,
+.web-page-content {
+height: 100%;
+}
+
+@media (max-width: 768px) {
+body {
+padding: 16px;
+}
+}
+
+@media (max-width: 768px) {
+.pma-login-container {
+flex-direction: column;
+min-height: auto;
+}
+
+.pma-login-left {
+padding: 40px 30px;
+text-align: center;
+}
+
+.pma-login-left h1 {
+font-size: 24px;
+}
+
+.pma-login-right {
+padding: 40px 30px;
+}
+}

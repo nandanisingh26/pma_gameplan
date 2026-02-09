@@ -1,0 +1,1365 @@
+let current_filter = "all";
+let current_sort = "newest";
+let all_people = [];
+let current_space_filter = "public";
+let all_spaces = [];
+window.all_spaces = all_spaces;
+
+frappe.pages["pma-gameplan"].on_page_load = function (wrapper) {
+
+  const page = frappe.ui.make_app_page({
+    parent: wrapper,
+    title: "PMA Gameplan",
+    single_column: true
+  });
+
+  const $wrapper = $(wrapper);
+  $wrapper.addClass("pma-gameplan-page");
+
+  const $layout = $(`
+    <div class="pma-layout">
+      <div class="pma-sidebar">
+        <div class="pma-sidebar-item active" data-view="posts">📝 Posts</div>
+        <div class="pma-sidebar-item" data-view="spaces">🗂 Spaces</div>
+        <div class="pma-sidebar-item" data-view="tasks">✅ Tasks</div>
+        <div class="pma-sidebar-item" data-view="people">👤 People</div>
+      </div>
+      <div class="pma-content">
+        <div id="pma-view"></div>
+      </div>
+    </div>
+  `);
+
+  $(page.body).append($layout);
+
+  // ✅ sidebar click — ONLY here
+  $layout.on("click", ".pma-sidebar-item", function () {
+    $(".pma-sidebar-item").removeClass("active");
+    $(this).addClass("active");
+    render_view($(this).data("view"));
+  });
+
+  // ✅ initial render — ONLY here
+  render_view("posts");
+};
+
+/* ---------------- RENDER VIEW ---------------- */
+function render_view(view) {
+  const $view = $("#pma-view");
+  $view.empty();
+  if (view === "people") {
+    const is_admin = frappe.user.has_role("Gameplan Admin");
+
+  $view.append(`
+    <div class="pma-header-bar d-flex justify-content-between align-items-center">
+      <h3>People</h3>
+      ${is_admin ? `
+        <button class="btn btn-primary btn-sm" id="add-pma-member">
+          Add Member
+        </button>
+      ` : ``}
+    </div>
+
+    <input
+      type="text"
+      class="form-control mb-3"
+      id="pma-people-search"
+      placeholder="Search people..."
+    />
+
+    <div id="pma-people-list"></div>
+  `);
+
+  if (is_admin) {
+    $("#add-pma-member").on("click", open_add_member_dialog);
+  }
+
+  load_people();
+}
+
+
+/* -------- POSTS -------- */
+if (view === "posts") {
+$view.append(`
+<div class="pma-posts-toolbar">
+<div class="pma-posts-filters">
+<button class="filter-btn active" data-filter="all">All</button>
+<button class="filter-btn" data-filter="unread">Unread</button>
+<button class="filter-btn" data-filter="bookmarked">Bookmarks</button>
+</div>
+
+<div class="pma-posts-actions">
+<select id="post-sort" class="form-control form-control-sm">
+<option value="newest">Newest first</option>
+<option value="oldest">Oldest first</option>
+<option value="creation">Creation date</option>
+</select>
+
+<button class="btn btn-primary btn-sm" id="new-pma-post">
+New Post
+</button>
+</div>
+</div>
+
+<div id="pma-post-feed"></div>
+`);
+
+wire_post_events();
+load_posts();
+}
+
+/* -------- SPACES -------- */
+if (view === "spaces") {
+render_spaces_ui($view);
+}
+
+
+/* -------- TASKS -------- */
+if (view === "tasks") {
+$view.append(`
+<h3>Tasks</h3>
+<p class="text-muted">Tasks coming soon.</p>
+`);
+}
+
+/* -------- PEOPLE -------- */
+
+function open_add_member_dialog() {
+  const d = new frappe.ui.Dialog({
+    title: "Add Gameplan Member",
+    fields: [
+      {
+        fieldname: "email",
+        label: "Email",
+        fieldtype: "Data",
+        reqd: 1
+      },
+      {
+        fieldname: "role",
+        label: "Role",
+        fieldtype: "Select",
+        options: "Gameplan Member\nGameplan Admin",
+        default: "Gameplan Member"
+      }
+    ],
+    primary_action_label: "Invite",
+    primary_action(values) {
+      frappe.call({
+        method: "pma_gameplan.api.invite_member",
+        args: values,
+        callback() {
+          d.hide();
+          frappe.show_alert("Member invited");
+          load_people(); // reload list
+        }
+      });
+    }
+  });
+
+  d.show();
+}
+}
+
+function load_people() {
+  frappe.call({
+    method: "pma_gameplan.api.get_people",
+    callback(r) {
+      all_people = r.message || [];
+      render_people(all_people);
+    }
+  });
+}
+
+
+
+function render_people(list) {
+  const $list = $("#pma-people-list");
+  $list.empty();
+
+  if (!list.length) {
+    $list.append("<p class='text-muted'>No members found.</p>");
+    return;
+  }
+
+  list.forEach(m => $list.append(render_person_card(m)));
+}
+
+$(document).on("input", "#pma-people-search", function () {
+  const q = $(this).val().toLowerCase();
+
+  const filtered = all_people.filter(m =>
+    (m.full_name || "").toLowerCase().includes(q) ||
+    (m.email || "").toLowerCase().includes(q) ||
+    (m.role || "").toLowerCase().includes(q)
+  );
+
+  render_people(filtered);
+});
+
+
+
+function render_person_card(m) {
+  const is_admin = frappe.user.has_role("Gameplan Admin");
+
+  const editBtn = is_admin
+    ? `
+      <button
+        class="btn btn-xs btn-light pma-edit-member"
+        data-user="${m.name}"
+        title="Edit User">
+        ✏️
+      </button>
+    `
+    : "";
+
+  return `
+    <div class="pma-person-card ${is_admin ? "is-admin" : "is-not-admin"}">
+      <div class="pma-person-main">
+        <div class="pma-avatar">
+          ${(m.full_name || m.name || "?").charAt(0)}
+        </div>
+
+        <div class="pma-person-info">
+          <div class="pma-person-name">
+            ${m.full_name || m.name}
+          </div>
+          <div class="pma-person-meta">
+            ${m.email || ""}
+          </div>
+        </div>
+      </div>
+
+      <div class="pma-person-actions">
+        <button
+          class="btn btn-xs btn-light pma-view-member"
+          data-user="${m.user}"
+          title="View User">
+          👁️
+        </button>
+
+        ${editBtn}
+      </div>
+    </div>
+  `;
+}
+
+
+$(document).on("click", ".pma-edit-member", function (e) {
+  e.preventDefault();
+  e.stopImmediatePropagation();
+
+  const user = $(this).attr("data-user");
+
+  if (!user) {
+    frappe.msgprint("User missing on edit button");
+    return;
+  }
+
+  window.location.href = `/app/user/${encodeURIComponent(user)}`;
+});
+
+
+
+
+
+
+
+$(document).on("click", ".pma-view-member", function (e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const member = $(this).data("member");
+
+  // 🛑 IMPORTANT GUARD
+  if (!member) return;
+
+  const $card = $(this).closest(".pma-person-card");
+
+  // toggle existing view
+  if ($card.find(".pma-member-view").length) {
+    $card.find(".pma-member-view").remove();
+    return;
+  }
+
+  frappe.call({
+    method: "pma_gameplan.api.get_member",
+    args: { name: member },
+    callback(r) {
+      const m = r.message;
+
+      $card.append(`
+        <div class="pma-member-view mt-2">
+          <div><strong>Name:</strong> ${m.full_name}</div>
+          <div><strong>Email:</strong> ${m.email}</div>
+          <div><strong>Role:</strong> ${m.role}</div>
+          <div><strong>Status:</strong> ${m.status}</div>
+        </div>
+      `);
+    }
+  });
+});
+
+
+
+
+function wire_post_events() {
+$("#new-pma-post").on("click", open_new_post_dialog);
+
+$(".filter-btn").on("click", function () {
+$(".filter-btn").removeClass("active");
+$(this).addClass("active");
+
+current_filter = $(this).data("filter");
+load_posts();
+});
+
+$("#post-sort").on("change", function () {
+current_sort = $(this).val();
+load_posts();
+});
+}
+
+
+function load_posts() {
+frappe.call({
+method: "pma_gameplan.api.get_posts",
+args: {
+filter: current_filter,
+sort: current_sort
+},
+callback(r) {
+const posts = r.message || [];
+const $feed = $("#pma-post-feed");
+
+$feed.empty();
+
+if (!posts.length) {
+$feed.append("<p class='text-muted'>No posts found.</p>");
+return;
+}
+
+posts.forEach(p => $feed.append(render_post_card(p)));
+}
+});
+}
+// 🔓 expose globally for reactions/comments
+window.load_posts = load_posts;
+
+
+/* ================= DIALOGS ================= */
+
+
+function open_new_post_dialog(default_space = null) {
+  let uploaded_files = [];
+
+  const dialog = new frappe.ui.Dialog({
+    title: default_space ? `New Post in ${default_space}` : "New Post",
+    size: "large",
+    fields: [
+  {
+    fieldname: "title",
+    label: "Title",
+    fieldtype: "Data",
+    reqd: 1
+  },
+  {
+    fieldname: "post_type",
+    label: "Post Type",
+    fieldtype: "Select",
+    options: [
+      "Post",
+      "Announcement",
+      "Information",
+      "Survey",
+      "On-Boarding",
+      "Off-Boarding",
+      "Celebration"
+    ],
+    default: "Post"
+  },
+  {
+    fieldname: "space",
+    label: "Space",
+    fieldtype: "Link",
+    options: "PMA Space",
+    get_query() {
+      return { query: "pma_gameplan.api.get_postable_spaces_link" };
+    },
+    description: "Select a space to post in"
+  },
+
+  
+
+  // 🔴 DO NOT put HTML here
+
+  {
+    fieldname: "content",
+    label: "Content",
+    fieldtype: "Text Editor",
+    reqd: 1
+  },
+
+{
+  fieldtype: "Section Break"
+},
+
+  // ✅ Attachments AFTER editor
+  {
+    fieldtype: "HTML",
+    fieldname: "attachments_html",
+    options: `
+      <div class="pma-attachments mt-3">
+        <button class="btn btn-default btn-sm" id="add-attachment">
+          📎 Add Attachments
+        </button>
+        <ul class="pma-attachment-list mt-2"></ul>
+      </div>
+    `
+  }
+],
+primary_action_label: "Publish",
+    primary_action(values) {
+      frappe.call({
+        method: "pma_gameplan.api.create_post",
+        args: {
+title: values.title,
+    post_type: values.post_type,
+    content: values.content,
+    space: values.space,   // ✅ sent correctly
+    attachments: uploaded_files
+  },
+        callback() {
+          dialog.hide();
+          frappe.show_alert({ message: "Post published", indicator: "green" });
+
+          if (values.space) {
+            load_space_posts(values.space);
+          } else {
+            load_posts();
+          }
+        }
+      });
+    }
+  });
+
+  dialog.show();
+
+  dialog.$wrapper.find("#add-attachment").on("click", function () {
+    new frappe.ui.FileUploader({
+      dialog: true,
+      multiple: true,
+      on_success(file) {
+        uploaded_files.push({
+          file: file.file_url,
+          file_name: file.file_name,
+          file_type: file.file_type
+        });
+      }
+    });
+  });
+}
+
+
+
+
+function open_edit_post_dialog(post_name) {
+frappe.call({
+method: "pma_gameplan.api.get_post",
+args: { name: post_name },
+callback(r) {
+const post = r.message;
+
+const d = new frappe.ui.Dialog({
+title: "Edit Post",
+size: "large",
+fields: [
+{
+fieldname: "title",
+label: "Title",
+fieldtype: "Data",
+reqd: 1,
+default: post.title
+},
+{
+fieldname: "post_type",
+label: "Post Type",
+fieldtype: "Select",
+options: [
+"Post",
+"Announcement",
+"Information",
+"Survey",
+"On-Boarding",
+"Off-Boarding",
+"Celebration"
+],
+default: post.post_type
+},
+
+{
+fieldname: "content",
+label: "Content",
+fieldtype: "Text Editor",
+reqd: 1,
+default: post.content
+}
+],
+primary_action_label: "Update",
+primary_action(values) {
+frappe.call({
+method: "pma_gameplan.api.update_post",
+args: {
+name: post_name,
+title: values.title,
+post_type: values.post_type,
+content: values.content
+},
+callback() {
+d.hide();
+frappe.show_alert({
+message: "Post updated",
+indicator: "green"
+});
+load_posts();
+}
+});
+}
+});
+
+d.add_custom_action("Delete", () => {
+frappe.confirm("Delete this post permanently?", () => {
+frappe.call({
+method: "pma_gameplan.api.delete_post",
+args: { name: post_name },
+callback() {
+d.hide();
+frappe.show_alert({
+message: "Post deleted",
+indicator: "red"
+});
+load_posts();
+}
+});
+});
+}, "danger");
+
+d.show();
+}
+});
+}
+
+function open_edit_member_dialog(member_name) {
+frappe.call({
+method: "pma_gameplan.api.get_member",
+args: { name: member_name },
+callback(r) {
+const m = r.message;
+
+const d = new frappe.ui.Dialog({
+title: "Edit Member",
+fields: [
+{
+fieldname: "role",
+label: "Role",
+fieldtype: "Select",
+options: ["Gameplan Admin", "Gameplan Member"],
+default: m.role
+},
+{
+fieldname: "status",
+label: "Status",
+fieldtype: "Select",
+options: ["Active", "Inactive"],
+default: m.status
+}
+],
+primary_action_label: "Update",
+primary_action(values) {
+frappe.call({
+method: "pma_gameplan.api.update_member",
+args: {
+name: member_name,
+role: values.role,
+status: values.status
+},
+callback() {
+d.hide();
+frappe.show_alert("Member updated", "green");
+location.reload();
+}
+});
+}
+});
+
+d.add_custom_action(
+"Deactivate",
+() => {
+frappe.confirm("Deactivate this member?", () => {
+frappe.call({
+method: "pma_gameplan.api.update_member",
+args: {
+name: member_name,
+role: m.role,
+status: "Inactive"
+},
+callback() {
+d.hide();
+frappe.show_alert({
+message: "Member deactivated",
+indicator: "orange"
+});
+load_posts();
+}
+});
+});
+},
+"danger"
+);
+
+d.show();
+}
+});
+}
+
+/* ================= RENDER CARDS ================= */
+
+function load_spaces() {
+  frappe.call({
+    method: "pma_gameplan.api.get_my_spaces",
+    callback(r) {
+      all_spaces = r.message || [];
+      window.all_spaces = all_spaces;   // 🔴 REQUIRED
+      render_spaces_list();
+    }
+  });
+}
+
+function render_spaces_list() {
+  const list = $(".pma-spaces-list");
+  list.empty();
+
+  let filtered = all_spaces;
+
+  if (current_space_filter === "public") {
+    filtered = all_spaces.filter(s => !s.is_private);
+  }
+
+  if (current_space_filter === "private") {
+    filtered = all_spaces.filter(s => s.is_private && s.is_member);
+  }
+
+  if (current_space_filter === "archived") {
+    filtered = [];
+  }
+
+  if (!filtered.length) {
+    list.append("<p class='text-muted'>No spaces found.</p>");
+    return;
+  }
+
+  filtered.forEach(s => {
+    list.append(`
+      <div class="pma-space-card mb-2 d-flex justify-content-between align-items-center"
+           data-space="${s.name}">
+        <strong>${s.space_name}</strong>
+        <button
+          class="btn btn-sm btn-light pma-space-menu-btn"
+          data-space="${s.name}"
+          data-is-admin="${Number(s.is_admin) === 1 ? 1 : 0}">
+          ⋮
+        </button>
+      </div>
+    `);
+  });
+}
+
+
+function show_space_menu(target, items) {
+  $(".pma-context-menu").remove(); // close existing
+
+  const $menu = $(`
+    <div class="pma-context-menu">
+      ${items.map(i => `
+        <div class="pma-context-item ${i.class || ""}">
+          ${i.label}
+        </div>
+      `).join("")}
+    </div>
+  `);
+
+  $("body").append($menu);
+
+  const offset = $(target).offset();
+  $menu.css({
+    top: offset.top + $(target).outerHeight(),
+    left: offset.left - $menu.outerWidth() + $(target).outerWidth()
+  });
+
+  $menu.find(".pma-context-item").each(function (idx) {
+    $(this).on("click", () => {
+      items[idx].action?.();
+      $menu.remove();
+    });
+  });
+
+  $(document).one("click", () => $menu.remove());
+}
+
+
+
+function open_new_space_dialog() {
+const d = new frappe.ui.Dialog({
+title: "New Space",
+fields: [
+{
+fieldtype: "Data",
+fieldname: "space_name",
+label: "Space name",
+reqd: 1
+},
+{
+fieldtype: "Select",
+fieldname: "space_type",
+label: "Category",
+options: ["Department", "Branch"],
+reqd: 1
+},
+{
+fieldtype: "Check",
+fieldname: "is_private",
+label: "Keep it private — Only visible to members"
+}
+],
+primary_action_label: "Create",
+primary_action(values) {
+console.log(values); 
+
+frappe.call({
+method: "pma_gameplan.api.create_space",
+args: values,
+callback() {
+d.hide();
+load_spaces();
+frappe.show_alert({
+message: "Space created",
+indicator: "green"
+});
+}
+});
+}
+});
+
+d.show();
+}
+
+function manage_space_members(space) {
+  const d = new frappe.ui.Dialog({
+    title: "Manage Members",
+    size: "large",
+    fields: [
+      {
+        fieldtype: "HTML",
+        fieldname: "members_html"
+      }
+    ]
+  });
+
+  d.show();
+  load_space_members(space, d);
+}
+function load_space_members(space, dialog) {
+  frappe.call({
+    method: "pma_gameplan.api.get_space_members",
+    args: { space },
+    callback(r) {
+      const members = r.message || [];
+
+      const html = `
+        <div class="mb-3">
+          <button class="btn btn-sm btn-primary add-space-member">
+            + Add Member
+          </button>
+        </div>
+
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th style="width:120px">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${members.map(m => `
+              <tr>
+                <td>${m.full_name}</td>
+                <td>${m.email}</td>
+                <td>
+                  <select class="form-control form-control-sm space-role"
+                    data-member="${m.member}">
+                    <option ${m.role === "Admin" ? "selected" : ""}>Admin</option>
+                    <option ${m.role === "Member" ? "selected" : ""}>Member</option>
+                  </select>
+                </td>
+                <td>
+                  <button class="btn btn-xs btn-danger remove-space-member"
+                    data-member="${m.member}">
+                    Remove
+                  </button>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+
+      dialog.fields_dict.members_html.$wrapper.html(html);
+
+      wire_space_member_events(space, dialog);
+    }
+  });
+}
+function wire_space_member_events(space, dialog) {
+
+  // Add member
+  dialog.$wrapper.find(".add-space-member").on("click", () => {
+    open_add_space_member_dialog(space, dialog);
+  });
+
+  // Change role
+  dialog.$wrapper.find(".space-role").on("change", function () {
+    frappe.call({
+      method: "pma_gameplan.api.add_space_member",
+      args: {
+        space,
+        user: $(this).data("member"),
+        role: $(this).val()
+      }
+    });
+  });
+
+  // Remove member
+  dialog.$wrapper.find(".remove-space-member").on("click", function () {
+    const member = $(this).data("member");
+
+    frappe.confirm("Remove this member from space?", () => {
+      frappe.call({
+        method: "pma_gameplan.api.remove_space_member",
+        args: { space, member },
+        callback() {
+          load_space_members(space, dialog);
+        }
+      });
+    });
+  });
+}
+function open_add_space_member_dialog(space, parent_dialog) {
+  const d = new frappe.ui.Dialog({
+    title: "Add Member",
+    fields: [
+      {
+        fieldtype: "Link",
+        fieldname: "member",
+        label: "Member",
+        options: "Gameplan Member",
+        reqd: 1
+      },
+      {
+        fieldtype: "Select",
+        fieldname: "role",
+        label: "Role",
+        options: ["Member", "Admin"],
+        default: "Member"
+      }
+    ],
+    primary_action_label: "Add",
+    primary_action(values) {
+      frappe.call({
+        method: "pma_gameplan.api.add_space_member",
+        args: {
+          space,
+          user: values.member,
+          role: values.role
+        },
+        callback() {
+          d.hide();
+          load_space_members(space, parent_dialog);
+        }
+      });
+    }
+  });
+
+  d.show();
+}
+
+
+
+function render_spaces_ui($view) {
+  $view.append(`
+    <div class="pma-spaces-header d-flex justify-content-between align-items-center mb-3">
+      <h3>Spaces</h3>
+      <button class="btn btn-primary btn-sm pma-add-space">
+        + Add new
+      </button>
+    </div>
+
+    <div class="pma-spaces-toolbar mb-3">
+      <input class="form-control mb-2"
+      placeholder="Search (Ctrl + F)" />
+
+      <div class="pma-space-filters btn-group btn-group-sm">
+        <button class="btn btn-default active" data-filter="public">Public</button>
+        <button class="btn btn-default" data-filter="private">Private</button>
+        <button class="btn btn-default" data-filter="archived">Archived</button>
+      </div>
+    </div>
+
+    <div class="pma-spaces-list"></div>
+  `);
+
+  load_spaces();
+
+  $view.find(".pma-add-space").on("click", open_new_space_dialog);
+
+    $view.find(".pma-space-filters button").on("click", function () {
+    $view.find(".pma-space-filters button").removeClass("active");
+    $(this).addClass("active");
+
+    current_space_filter = $(this).data("filter");
+    render_spaces_list();
+  });
+}
+
+function render_comment(comment, level = 0) {
+const margin = level * 24;
+
+let html = `
+<div class="pma-comment" data-comment="${comment.name}"
+style="margin-left:${margin}px">
+<div class="pma-comment-meta">
+<strong>${comment.author_name}</strong>
+<span class="text-muted">
+• ${frappe.datetime.str_to_user(comment.creations)}
+</span>
+</div>
+
+<div class="pma-comment-content">
+${link_mentions(comment.content)}
+</div>
+
+<span class="pma-reply-btn text-muted">Reply</span>
+`;
+
+if (comment.replies?.length) {
+comment.replies.forEach(r => {
+html += render_comment(r, level + 1);
+});
+}
+
+html += `</div>`;
+return html;
+}
+
+function linkify_urls(text) {
+if (!text) return "";
+return text.replace(
+/(https?:\/\/[^\s<]+)/g,
+`<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>`
+);
+}
+function link_mentions(text) {
+return text.replace(
+/@([a-zA-Z0-9._-]+)/g,
+`<a href="/app/user/$1" class="pma-mention">@$1</a>`
+);
+}
+
+function render_post_card(post) {
+const is_admin = frappe.user.has_role("Gameplan Admin");
+
+const attachments_html = (post.attachments || [])
+.map(a => `
+<li>
+<a href="${a.file || a.file_url}" target="_blank">
+📎 ${a.file_name}
+</a>
+</li>
+`)
+.join("");
+
+const $card = $(`
+<div class="pma-post-card ${is_admin ? "editable" : ""}"
+data-post="${post.name}"
+style=" "
+
+<strong>${post.title}</strong>
+
+<div class="text-muted">
+${post.author_name} • ${frappe.datetime.str_to_user(post.published_on)}
+</div>
+
+<div class="pma-post-content"></div>
+
+${attachments_html ? `
+<ul class="pma-post-attachments">
+${attachments_html}
+</ul>
+` : ""}
+
+<!-- ACTIONS -->
+<div class="pma-post-actions">
+<div class="pma-reactions" data-post="${post.name}">
+<span class="pma-reaction-btn" data-reaction="👍">
+👍 <span class="count">0</span> 
+</span>
+<span class="pma-reaction-btn" data-reaction="❤️">
+❤️ <span class="count">0</span>
+</span>
+<span class="pma-reaction-btn" data-reaction="🎉">
+🎉 <span class="count">0</span>
+</span>
+
+</div>
+<button class="pma-comment-toggle" type="button">
+💬 <span class="pma-comment-count">${post.comment_count || 0}</span>
+</button>
+
+</div>
+<!-- COMMENTS CONTAINER (HIDDEN BY DEFAULT) -->
+<div class="pma-comments-container" style="display:none;">
+<div class="pma-comments-list" data-post="${post.name}"></div>
+</div>
+</div>
+`);
+
+$card.find(".pma-post-content").html(
+linkify_urls(post.content || "")
+);
+
+frappe.call({
+method: "pma_gameplan.api.get_reaction_summary",
+args: { post: post.name },
+callback(r) {
+const data = r.message || {};
+Object.entries(data).forEach(([emoji, count]) => {
+$card
+.find(`.pma-reaction-btn[data-reaction="${emoji}"] .count`)
+.text(count);
+});
+}
+});
+
+// load comments under post
+frappe.call({
+method: "pma_gameplan.api.get_comments",
+args: { post: post.name },
+callback(r) {
+const list = $card.find(".pma-comments-list");
+list.empty();
+
+(r.message || []).forEach(c => {
+list.append(render_comment(c));
+});
+}
+});
+
+
+return $card;
+}
+
+function render_space_feed(space) {
+  const $view = $("#pma-view");
+  $view.empty();
+
+  $view.append(`
+    <div class="pma-space-feed-header mb-3">
+      <button class="btn btn-link btn-sm pma-back-to-spaces">
+        ← Spaces
+      </button>
+      <h3 class="pma-space-title">${space}</h3>
+    </div>
+
+    <div class="pma-posts-toolbar mb-2">
+      <button class="btn btn-primary btn-sm new-space-post">
+        New Post
+      </button>
+    </div>
+
+    <div class="pma-posts-list"></div>
+  `);
+
+  $(".pma-back-to-spaces").on("click", () => {
+    render_spaces_ui($view);
+  });
+
+  $(".new-space-post").on("click", () => {
+    open_new_post_dialog(space); // 👈 pass space
+  });
+
+  load_space_posts(space);
+}
+function load_space_posts(space) {
+  frappe.call({
+    method: "pma_gameplan.api.get_space_posts",
+    args: { space },
+    callback(r) {
+      const posts = r.message || [];
+      const $list = $(".pma-posts-list");
+
+      $list.empty();
+
+      if (!posts.length) {
+        $list.append("<p class='text-muted'>No posts in this space yet.</p>");
+        return;
+      }
+
+      posts.forEach(p => {
+        $list.append(render_post_card(p));
+      });
+    }
+  });
+}
+
+
+
+
+/* ================= POST INTERACTIONS ================= */
+
+/*---------------------space card-----------------*/
+$(document).on("click", ".pma-space-card", function () {
+const space = $(this).data("space");
+render_space_feed(space);
+});
+
+
+$(document).on("click", ".pma-space-menu-btn", function (e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const space = $(this).data("space");
+  const is_admin = Number($(this).data("is-admin")) === 1;
+
+  const items = [
+    { label: "Edit", action: () => open_edit_space_dialog?.(space) },
+    { label: "Mark all as read", action: () => {} },
+    { label: "Join space", action: () => {} }
+  ];
+
+  const is_gameplan_admin = frappe.user.has_role("Gameplan Admin");
+  const is_space_admin = Number($(this).data("is-admin")) === 1;
+  if (is_gameplan_admin || is_space_admin) {
+    items.push(
+    { label: "Manage Members", action: () => manage_space_members?.(space) },
+    { label: "Change Category", action: () => {} },
+    { label: "Archive", action: () => {} },
+    { label: "Delete", class: "text-danger", action: () => delete_space(space) }
+  );
+}
+
+
+  show_space_menu(this, items);
+});
+
+function delete_space(space_name) {
+  frappe.confirm(
+    `Are you sure you want to delete this space?`,
+    () => {
+      frappe.call({
+        method: "pma_gameplan.api.delete_space",
+        args: { space: space_name },
+        freeze: true,
+        callback(r) {
+          frappe.msgprint("Space deleted");
+          // refresh UI
+          load_spaces();
+        }
+      });
+    }
+  );
+}
+
+
+
+/* =====================================================
+✅ FIX 1 — STOP CLICK BUBBLING AT SOURCE (ONCE ONLY)
+===================================================== */
+$(document).on(
+"click",
+".pma-reaction-btn, .pma-comment-toggle",
+function (e) {
+e.preventDefault();
+e.stopPropagation();
+}
+);
+
+/* =====================================================
+✅ FIX 2 — REACTION HANDLER (MUST BE ABOVE POST CARD)
+===================================================== */
+$(document).on("click", ".pma-reaction-btn", function (e) {
+e.preventDefault();
+e.stopPropagation();
+
+const post = $(this).closest(".pma-post-card").data("post");
+const reaction = $(this).data("reaction");
+
+frappe.call({
+method: "pma_gameplan.api.react_to_post",
+args: { post, reaction },
+callback: load_posts
+});
+});
+
+/* =====================================================
+TOOLTIP — REACTION USERS
+===================================================== */
+$(document).on("mouseenter", ".pma-reaction-btn", function () {
+const $btn = $(this);
+const post = $btn.closest(".pma-post-card").data("post");
+const reaction = $btn.data("reaction");
+
+frappe.call({
+method: "pma_gameplan.api.get_reaction_users",
+args: { post, reaction },
+callback(r) {
+const users = (r.message || []).map(u => u.user).join(", ");
+if (users) {
+$btn.attr("title", `Liked by ${users}`);
+}
+}
+});
+});
+
+/* =====================================================
+✅ FIX 3 — COMMENT TOGGLE (SAFE VERSION)
+===================================================== */
+$(document).on("click", ".pma-comment-toggle", function (e) {
+e.preventDefault();
+e.stopPropagation();
+
+const $card = $(this).closest(".pma-post-card");
+const $comments = $card.find(".pma-comments-container");
+
+$(".pma-comments-container").not($comments).hide();
+$(".pma-comment-box").remove();
+
+$comments.toggle();
+
+if ($card.find(".pma-comment-box").length) return;
+
+const $box = $(`
+<div class="pma-comment-box mt-2">
+<textarea class="pma-comment-input"
+rows="2"
+placeholder="Write a comment..."></textarea>
+<button class="btn btn-primary btn-xs mt-2 pma-submit-comment">
+Post
+</button>
+</div>
+`);
+
+$comments.append($box);
+});
+
+/* ---------- SUBMIT COMMENT ---------- */
+$(document).on("click", ".pma-submit-comment", function (e) {
+e.preventDefault();
+e.stopPropagation();
+
+const $box = $(this).closest(".pma-comment-box");
+const content = $box.find(".pma-comment-input").val();
+
+const post = $(this)
+.closest(".pma-post-card")
+.data("post");
+
+if (!content) return;
+
+frappe.call({
+method: "pma_gameplan.api.add_comment",
+args: {
+post,
+content
+},
+callback() {
+load_posts();
+}
+});
+});
+
+
+/* =====================================================
+REPLY BUTTON
+===================================================== */
+$(document).on("click", ".pma-reply-btn", function (e) {
+e.preventDefault();
+e.stopPropagation();
+
+$(".pma-reply-box").remove();
+
+const $comment = $(this).closest(".pma-comment");
+
+const $box = $(`
+<div class="pma-reply-box mt-2">
+<textarea class="pma-reply-input"
+rows="2"
+placeholder="Reply... (@mention supported)"></textarea>
+<button class="btn btn-primary btn-xs mt-1 pma-submit-reply">
+Reply
+</button>
+</div>
+`);
+
+$comment.append($box);
+});
+
+/* =====================================================
+SUBMIT REPLY
+===================================================== */
+$(document).on("click", ".pma-submit-reply", function (e) {
+e.preventDefault();
+e.stopPropagation();
+
+const content = $(this)
+.closest(".pma-reply-box")
+.find(".pma-reply-input")
+.val();
+
+const parent_comment = $(this)
+.closest(".pma-comment")
+.data("comment");
+
+const post = $(this)
+.closest(".pma-post-card")
+.data("post");
+
+if (!content) return;
+
+frappe.call({
+method: "pma_gameplan.api.add_comment",
+args: { post, content, parent_comment },
+callback: load_posts
+});
+});
+
+/* =====================================================
+POST CARD CLICK — ADMIN EDIT (LAST, ALWAYS LAST)
+===================================================== */
+/* ---------- ALLOW LINK CLICKS INSIDE POSTS ---------- */
+$(document).on("click", ".pma-post-card a", function (e) {
+e.stopPropagation(); // ⛔ prevent admin edit
+});
+
+$(document).on("click", ".pma-post-card", function (e) {
+if (!frappe.user.has_role("Gameplan Admin")) return;
+
+if (
+$(e.target).closest(
+".pma-reaction-btn, .pma-comment-toggle, button, textarea, input"
+).length
+) {
+return;
+}
+
+open_edit_post_dialog($(this).data("post"));
+});

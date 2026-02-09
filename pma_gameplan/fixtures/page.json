@@ -1,0 +1,19 @@
+[
+ {
+  "content": null,
+  "docstatus": 0,
+  "doctype": "Page",
+  "icon": null,
+  "modified": "2026-01-19 03:46:28.453513",
+  "module": "PMA Gameplan",
+  "name": "pma-gameplan",
+  "page_name": "pma-gameplan",
+  "restrict_to_domain": null,
+  "roles": [],
+  "script": null,
+  "standard": "Yes",
+  "style": null,
+  "system_page": 0,
+  "title": "PMA Gameplan"
+ }
+]

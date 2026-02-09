@@ -1,0 +1,1040 @@
+/* =========================================================
+   PMA GAMEPLAN – SAFE DESK STYLES
+   ========================================================= */
+
+/* Root page wrapper */
+.pma-gameplan-page {
+  padding: 0;
+}
+
+/* Main layout */
+.pma-layout {
+  display: flex;
+  min-height: calc(100vh - 140px);
+  background: #ffffff;
+}
+
+/* ---------------- SIDEBAR ---------------- */
+
+.pma-sidebar {
+  width: 220px;
+  border-right: 1px solid #e5e7eb;
+  background: #fafafa;
+  padding: 12px 8px;
+}
+
+.pma-sidebar-item {
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.pma-sidebar-item:hover {
+  background: #f1f5f9;
+}
+
+.pma-sidebar-item.active {
+  background: #e5e7eb;
+  font-weight: 600;
+}
+
+/* ---------------- CONTENT ---------------- */
+
+.pma-content {
+  flex: 1;
+  padding: 16px 20px;
+  overflow-y: auto;
+}
+
+/* Header bar (Posts / People top bar) */
+.pma-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+/* ---------------- POSTS ---------------- */
+
+#pma-post-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pma-post-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.pma-post-card strong {
+  font-size: 15px;
+}
+
+.pma-post-card .text-muted {
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+
+/* ================= DIALOG LINK FIELD FIX ================= */
+
+/* Allow awesomplete dropdown to escape dialog body */
+.modal-body {
+  overflow: visible !important;
+}
+
+/* Ensure dropdown positions correctly */
+.modal-body .form-group {
+  position: relative;
+}
+
+/* Keep attachments safely below */
+.pma-attachments {/* =========================================================
+   PMA GAMEPLAN – SAFE DESK STYLES
+   ========================================================= */
+
+/* Root page wrapper */
+.pma-gameplan-page {
+  padding: 0;
+}
+
+/* Main layout */
+.pma-layout {
+  display: flex;
+  min-height: calc(100vh - 140px);
+  background: #ffffff;
+}
+
+/* ---------------- SIDEBAR ---------------- */
+
+.pma-sidebar {
+  width: 220px;
+  border-right: 1px solid #e5e7eb;
+  background: #fafafa;
+  padding: 12px 8px;
+}
+
+.pma-sidebar-item {
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.pma-sidebar-item:hover {
+  background: #f1f5f9;
+}
+
+.pma-sidebar-item.active {
+  background: #e5e7eb;
+  font-weight: 600;
+}
+
+/* ---------------- CONTENT ---------------- */
+
+.pma-content {
+  flex: 1;
+  padding: 16px 20px;
+  overflow-y: auto;
+}
+
+/* Header bar (Posts / People top bar) */
+.pma-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+/* ---------------- POSTS ---------------- */
+
+#pma-post-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pma-post-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.pma-post-card strong {
+  font-size: 15px;
+}
+
+.pma-post-card .text-muted {
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+
+/* ================= DIALOG LINK FIELD FIX ================= */
+
+/* Allow awesomplete dropdown to escape dialog body */
+.modal-body {
+  overflow: visible !important;
+}
+
+/* Ensure dropdown positions correctly */
+.modal-body .form-group {
+  position: relative;
+}
+
+/* Keep attachments safely below */
+.pma-attachments {
+  margin-top: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Dropdown itself */
+.awesomplete,
+.link-field .awesomplete {
+  z-index: 1050 !important;
+}
+
+
+
+/* ================= POST ACTIONS ================= */
+
+.pma-post-card.editable {
+  cursor: pointer;
+}
+
+.pma-reaction-btn,
+.pma-comment-toggle {
+  cursor: pointer;
+}
+
+
+
+.pma-post-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.pma-reactions {
+  display: flex;
+  gap: 8px;
+}
+
+.pma-reaction-btn {
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.pma-reaction-btn:hover {
+  background: #f2f2f2;
+}
+
+
+/* ================= COMMENT BUTTON (TEXT STYLE) ================= */
+
+.pma-comment-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: #4c5fd7;
+  cursor: pointer;
+}
+
+.pma-comment-toggle:hover {
+  text-decoration: underline;
+}
+
+
+/* ================= COMMENT BOX ================= */
+
+.pma-comment-box {
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+}
+
+.pma-comment-box .ql-container {
+  min-height: 80px;
+}
+
+.pma-comment-input {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #d1d8dd;
+  padding: 8px;
+  font-size: 13px;
+  resize: vertical;
+}
+
+
+.pma-comment-input:focus {
+  outline: none;
+  border-color: #5e64ff;
+}
+
+.pma-mention {
+  color: #1f7ae0;
+  font-weight: 500;
+  cursor: pointer;
+}
+.pma-comment-count {
+  margin-left: 2px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* ---------------- PEOPLE ---------------- */
+
+.pma-person-actions {
+  z-index: 20;
+}
+
+.pma-person-actions button {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+
+/* ensure card is the positioning context */
+.pma-person-card {
+  position: relative;
+}
+
+/* keep content from affecting action placement */
+.pma-person-main {
+  padding-right: 60px; /* reserve space for icons */
+}
+
+/* lock icons to bottom-right */
+.pma-person-actions {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  z-index: 10;
+}
+
+/* icon buttons — stable size */
+.pma-person-actions .btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  cursor: pointer;
+}
+
+
+/* Container */
+#pma-people-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Card */
+.pma-person-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.pma-person-card:hover {
+  background: #f9fafb;
+}
+
+.pma-person-card:hover .pma-person-actions {
+  opacity: 1;
+}
+
+/* Info layout */
+.pma-person-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Actions (bottom-right) */
+.pma-person-actions {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* Icon buttons */
+.pma-person-actions .btn {
+  padding: 4px 6px;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* Prevent card click stealing button click */
+.pma-person-card * {
+  pointer-events: auto;
+}
+
+
+/* Status indicator */
+.indicator.green {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.indicator.gray {
+  background: #9ca3af;
+  color: #ffffff;
+}
+
+.indicator {
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  margin-left: 6px;
+}
+
+/* ---------------- DIALOG SAFETY ---------------- */
+
+.modal-dialog {
+  max-width: 640px;
+}
+
+/* Prevent Frappe styles from collapsing layout */
+.layout-main-section {
+  overflow: visible;
+}
+
+.pma-attachments {
+  pointer-events: auto;
+}
+
+.pma-attachments button {
+  pointer-events: auto;
+  z-index: 10;
+  position: relative;
+}
+
+
+/* ===================================================== */
+/* PMA GAMEPLAN – POSTS TOOLBAR (OVERRIDE FRAPPE DESK)   */
+/* ===================================================== */
+
+.pma-gameplan-page .pma-posts-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* ---------- FILTER TABS ---------- */
+
+.pma-gameplan-page .pma-posts-filters {
+  display: inline-flex;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 8px;
+  gap: 4px;
+}
+
+.pma-gameplan-page .pma-posts-filters button.filter-btn {
+  appearance: none;
+  border: none !important;
+  background: transparent !important;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4b5563;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pma-gameplan-page .pma-posts-filters button.filter-btn:hover {
+  background: #e5e7eb !important;
+}
+
+.pma-gameplan-page .pma-posts-filters button.filter-btn.active {
+  background: #ffffff !important;
+  color: #111827 !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+/* ---------- RIGHT SIDE ACTIONS ---------- */
+
+.pma-gameplan-page .pma-posts-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Sort dropdown */
+.pma-gameplan-page #post-sort {
+  height: 30px;
+  padding: 2px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+}
+
+/* New Post button */
+.pma-gameplan-page #new-pma-post {
+  height: 30px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.pma-post-card {
+  cursor: default;
+}
+
+.pma-post-card.editable {
+  cursor: pointer;
+}
+
+
+/* ================================
+   CLICK FIX — FINAL
+================================ */
+
+.pma-post-card {
+  position: relative;
+}
+
+.pma-post-actions {
+  position: relative;
+  z-index: 5;
+}
+
+.pma-reaction-btn,
+.pma-comment-toggle {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+/*-------------------------PMA Space-------------------------*/
+.pma-spaces-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pma-spaces-toolbar {
+  display: flex;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.pma-space-filters button {
+  border: 1px solid var(--border-color);
+  background: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.pma-space-filters .active {
+  background: var(--gray-100);
+}
+
+.pma-space-card {
+  display: flex;
+  gap: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px;
+  width: 240px;
+}
+
+.pma-space-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--blue-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+.pma-space-feed-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.pma-context-menu {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  min-width: 180px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 10000;
+}
+
+.pma-context-item {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.pma-context-item:hover {
+  background: #f5f7fa;
+}
+
+.pma-context-item.text-danger {
+  color: #d9534f;
+}
+
+  margin-top: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Dropdown itself */
+.awesomplete,
+.link-field .awesomplete {
+  z-index: 1050 !important;
+}
+
+
+
+/* ================= POST ACTIONS ================= */
+
+.pma-post-card.editable {
+  cursor: pointer;
+}
+
+.pma-reaction-btn,
+.pma-comment-toggle {
+  cursor: pointer;
+}
+
+
+
+.pma-post-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.pma-reactions {
+  display: flex;
+  gap: 8px;
+}
+
+.pma-reaction-btn {
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.pma-reaction-btn:hover {
+  background: #f2f2f2;
+}
+
+
+/* ================= COMMENT BUTTON (TEXT STYLE) ================= */
+
+.pma-comment-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: #4c5fd7;
+  cursor: pointer;
+}
+
+.pma-comment-toggle:hover {
+  text-decoration: underline;
+}
+
+
+/* ================= COMMENT BOX ================= */
+
+.pma-comment-box {
+  border-top: 1px solid #eee;
+  padding-top: 8px;
+}
+
+.pma-comment-box .ql-container {
+  min-height: 80px;
+}
+
+.pma-comment-input {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #d1d8dd;
+  padding: 8px;
+  font-size: 13px;
+  resize: vertical;
+}
+
+
+.pma-comment-input:focus {
+  outline: none;
+  border-color: #5e64ff;
+}
+
+.pma-mention {
+  color: #1f7ae0;
+  font-weight: 500;
+  cursor: pointer;
+}
+.pma-comment-count {
+  margin-left: 2px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* ---------------- PEOPLE ---------------- */
+
+.pma-person-actions {
+  z-index: 20;
+}
+
+.pma-person-actions button {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+
+/* ensure card is the positioning context */
+.pma-person-card {
+  position: relative;
+}
+
+/* keep content from affecting action placement */
+.pma-person-main {
+  padding-right: 60px; /* reserve space for icons */
+}
+
+/* lock icons to bottom-right */
+.pma-person-actions {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  z-index: 10;
+}
+
+/* icon buttons — stable size */
+.pma-person-actions .btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  cursor: pointer;
+}
+
+
+/* Container */
+#pma-people-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Card */
+.pma-person-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.pma-person-card:hover {
+  background: #f9fafb;
+}
+
+.pma-person-card:hover .pma-person-actions {
+  opacity: 1;
+}
+
+/* Info layout */
+.pma-person-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Actions (bottom-right) */
+.pma-person-actions {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* Icon buttons */
+.pma-person-actions .btn {
+  padding: 4px 6px;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* Prevent card click stealing button click */
+.pma-person-card * {
+  pointer-events: auto;
+}
+
+
+/* Status indicator */
+.indicator.green {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.indicator.gray {
+  background: #9ca3af;
+  color: #ffffff;
+}
+
+.indicator {
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  margin-left: 6px;
+}
+
+/* ---------------- DIALOG SAFETY ---------------- */
+
+.modal-dialog {
+  max-width: 640px;
+}
+
+/* Prevent Frappe styles from collapsing layout */
+.layout-main-section {
+  overflow: visible;
+}
+
+.pma-attachments {
+  pointer-events: auto;
+}
+
+.pma-attachments button {
+  pointer-events: auto;
+  z-index: 10;
+  position: relative;
+}
+
+
+/* ===================================================== */
+/* PMA GAMEPLAN – POSTS TOOLBAR (OVERRIDE FRAPPE DESK)   */
+/* ===================================================== */
+
+.pma-gameplan-page .pma-posts-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* ---------- FILTER TABS ---------- */
+
+.pma-gameplan-page .pma-posts-filters {
+  display: inline-flex;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 8px;
+  gap: 4px;
+}
+
+.pma-gameplan-page .pma-posts-filters button.filter-btn {
+  appearance: none;
+  border: none !important;
+  background: transparent !important;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4b5563;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pma-gameplan-page .pma-posts-filters button.filter-btn:hover {
+  background: #e5e7eb !important;
+}
+
+.pma-gameplan-page .pma-posts-filters button.filter-btn.active {
+  background: #ffffff !important;
+  color: #111827 !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+/* ---------- RIGHT SIDE ACTIONS ---------- */
+
+.pma-gameplan-page .pma-posts-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Sort dropdown */
+.pma-gameplan-page #post-sort {
+  height: 30px;
+  padding: 2px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background-color: #ffffff;
+}
+
+/* New Post button */
+.pma-gameplan-page #new-pma-post {
+  height: 30px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.pma-post-card {
+  cursor: default;
+}
+
+.pma-post-card.editable {
+  cursor: pointer;
+}
+
+
+/* ================================
+   CLICK FIX — FINAL
+================================ */
+
+.pma-post-card {
+  position: relative;
+}
+
+.pma-post-actions {
+  position: relative;
+  z-index: 5;
+}
+
+.pma-reaction-btn,
+.pma-comment-toggle {
+  position: relative;
+  z-index: 10;
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+/*-------------------------PMA Space-------------------------*/
+.pma-spaces-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pma-spaces-toolbar {
+  display: flex;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.pma-space-filters button {
+  border: 1px solid var(--border-color);
+  background: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.pma-space-filters .active {
+  background: var(--gray-100);
+}
+
+.pma-space-card {
+  display: flex;
+  gap: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px;
+  width: 240px;
+}
+
+.pma-space-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--blue-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+.pma-space-feed-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.pma-context-menu {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  min-width: 180px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 10000;
+}
+
+.pma-context-item {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.pma-context-item:hover {
+  background: #f5f7fa;
+}
+
+.pma-context-item.text-danger {
+  color: #d9534f;
+}

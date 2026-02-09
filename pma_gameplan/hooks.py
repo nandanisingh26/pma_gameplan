@@ -4,6 +4,30 @@ app_publisher = "PMA"
 app_description = "PMA internal collaboration & planning system"
 app_email = "nandani.singh@prettl.com"
 app_license = "mit"
+app_include_css = [
+    "/assets/pma_gameplan/css/pma_gameplan.css"
+]
+
+doc_events = {
+    "User": {
+        "on_update": "pma_gameplan.utils.enforce_gameplan_admin"
+    }
+}
+
+
+
+fixtures = [
+    {
+        "dt": "Page",
+        "filters": [["name", "=", "pma-gameplan"]]
+    }
+]
+
+on_session_creation = [
+    "pma_gameplan.auth.ensure_pma_member"
+]
+
+home_page = "pma-login"
 
 # Apps
 # ------------------

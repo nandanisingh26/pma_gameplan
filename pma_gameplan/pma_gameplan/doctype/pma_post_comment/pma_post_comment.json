@@ -1,0 +1,43 @@
+{
+  "doctype": "DocType",
+  "name": "PMA Post Comment",
+  "module": "PMA Gameplan",
+  "custom": 0,
+  "istable": 0,
+  "issingle": 0,
+  "is_submittable": 0,
+  "is_tree": 0,
+  "editable_grid": 0,
+  "engine": "InnoDB",
+  "fields": [
+    {
+      "fieldname": "post",
+      "fieldtype": "Link",
+      "label": "Post",
+      "options": "PMA Post",
+      "reqd": 1
+    },
+    {
+      "fieldname": "content",
+      "fieldtype": "Small Text",
+      "label": "Comment",
+      "reqd": 1
+    },
+    {
+      "fieldname": "author",
+      "fieldtype": "Link",
+      "label": "Author",
+      "options": "User",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}
