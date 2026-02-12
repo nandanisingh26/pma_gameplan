@@ -276,8 +276,8 @@ $(document).on("click", ".pma-view-member", function (e) {
   const $card = $(this).closest(".pma-person-card");
 
   // toggle existing view
-  if ($card.find(".pma-member-view").length) {
-    $card.find(".pma-member-view").remove();
+  if ($card.find(".gameplan-member-view").length) {
+    $card.find(".gameplan-member-view").remove();
     return;
   }
 
@@ -288,7 +288,7 @@ $(document).on("click", ".pma-view-member", function (e) {
       const m = r.message;
 
       $card.append(`
-        <div class="pma-member-view mt-2">
+        <div class="gameplan-member-view mt-2">
           <div><strong>Name:</strong> ${m.full_name}</div>
           <div><strong>Email:</strong> ${m.email}</div>
           <div><strong>Role:</strong> ${m.role}</div>
@@ -862,7 +862,7 @@ function open_add_space_member_dialog(space, parent_dialog) {
         fieldtype: "Link",
         fieldname: "member",
         label: "Member",
-        options: "Gameplan Member",
+        options: "PMA Member",
         reqd: 1
       },
       {

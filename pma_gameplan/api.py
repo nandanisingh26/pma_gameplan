@@ -100,6 +100,7 @@ def get_postable_spaces_link(doctype, txt, searchfield, start, page_len, filters
             ON sm.parent = s.name
         WHERE
             sm.member = %s
+            AND s.is_archived = 0
             AND s.space_name LIKE %s
         ORDER BY s.space_name
         LIMIT %s OFFSET %s
@@ -109,7 +110,6 @@ def get_postable_spaces_link(doctype, txt, searchfield, start, page_len, filters
         page_len,
         start
     ))
-
 
 
 
@@ -396,19 +396,18 @@ def get_people():
 def get_member(name):
     return frappe.get_doc("PMA Member", name)
 
+from pma_gameplan.constants import (
+    GAMEPLAN_MEMBER_ROLE,
+    GAMEPLAN_ADMIN_ROLE
+)
+
 @frappe.whitelist()
-def invite_member(email, role="PMA Member"):
-    # 1️⃣ Resolve company safely
-    company = (
-        frappe.defaults.get_user_default("Company")
-        or frappe.db.get_single_value("Global Defaults", "default_company")
-        or frappe.db.get_value("Company", {}, "name")
-    )
+def invite_member(email, role):
 
-    if not company:
-        frappe.throw("No Company found. Please create or set a default Company.")
+    if role not in ["Gameplan Admin", "Gameplan Member"]:
+        frappe.throw("Invalid role")
 
-    # 2️⃣ Create user if not exists
+    # Create user if not exists
     if not frappe.db.exists("User", email):
         user = frappe.get_doc({
             "doctype": "User",
@@ -418,31 +417,19 @@ def invite_member(email, role="PMA Member"):
             "send_welcome_email": 1
         })
         user.insert(ignore_permissions=True)
-
-        # Assign base role only if exists
-        if frappe.db.exists("Role", "System User"):
-            user.add_roles("System User")
     else:
         user = frappe.get_doc("User", email)
 
-    # 3️⃣ Create PMA Member
-    if not frappe.db.exists("PMA Member", {"user": user.name}):
-        member = frappe.new_doc("PMA Member")
-        member.user = user.name
-        member.full_name = user.full_name
-        member.email = user.email
-        member.company = company
-        member.role = role
-        member.status = "Active"
-        member.insert(ignore_permissions=True)
+    # Ensure System User
+    user.add_roles("System User")
 
-    # 4️⃣ Sync PMA role → Frappe role
-    sync_role(user.name, role)
+    # Assign selected role
+    user.add_roles(role)
 
-    return {
-        "user": user.name,
-        "company": company
-    }
+    user.save(ignore_permissions=True)
+
+    return {"user": user.name}
+
 
 # -------------------- PMA Space ---------------------
 
@@ -541,15 +528,30 @@ def delete_space(space):
 @frappe.whitelist()
 def get_my_spaces():
     user = frappe.session.user
+    roles = frappe.get_roles(user)
 
+    # 🔥 Global override — Gameplan Admin sees all spaces
+    if GAMEPLAN_ADMIN_ROLE in roles:
+        return frappe.get_all(
+            "PMA Space",
+            fields=[
+                "name",
+                "space_name",
+                "space_type",
+                "is_private"
+            ],
+            order_by="creation desc"
+        )
+
+    # ⬇️ Normal member logic
     member = frappe.db.get_value(
-    "PMA Member",
-    {"user": user},
-    "name"
+        "PMA Member",
+        {"user": user},
+        "name"
     )
-    as_dict=True
 
-
+    if not member:
+        return []
 
     spaces = frappe.db.sql("""
         SELECT
@@ -574,28 +576,30 @@ def get_my_spaces():
 
 @frappe.whitelist()
 def add_space_member(space, user, role="Member"):
-    if GAMEPLAN_ADMIN_ROLE not in frappe.get_roles(frappe.session.user):
-        frappe.throw("Only Gameplan Admins can manage space members")
-
     doc = frappe.get_doc("PMA Space", space)
 
-    current_member = frappe.db.get_value(
-        "PMA Member",
-        {"user": frappe.session.user},
-        "name"
-    )
+    roles = frappe.get_roles(frappe.session.user)
 
-    if not current_member:
-        frappe.throw("Not a Gameplan member")
+    # 🔥 Global override
+    if GAMEPLAN_ADMIN_ROLE not in roles:
+        current_member = frappe.db.get_value(
+            "PMA Member",
+            {"user": frappe.session.user},
+            "name"
+        )
 
-    is_space_admin = any(
-        m.member == current_member and m.role == "Admin"
-        for m in doc.members
-    )
+        if not current_member:
+            frappe.throw("Not a Gameplan member")
 
-    if not is_space_admin:
-        frappe.throw("Only Space Admins can manage members")
+        is_space_admin = any(
+            m.member == current_member and m.role == "Admin"
+            for m in doc.members
+        )
 
+        if not is_space_admin:
+            frappe.throw("Only Space Admins can manage members")
+
+    # Prevent duplicate
     if any(m.member == user for m in doc.members):
         frappe.throw("Member already exists in this space")
 
@@ -606,6 +610,7 @@ def add_space_member(space, user, role="Member"):
 
     doc.save(ignore_permissions=True)
     return True
+
 
 
 
@@ -638,16 +643,21 @@ def get_space_members(space):
 def remove_space_member(space, member):
     doc = frappe.get_doc("PMA Space", space)
 
-    current_member = frappe.db.get_value(
-    "PMA Member",
-    {"user": frappe.session.user},
-    "name")
-    as_dict=True
+    roles = frappe.get_roles(frappe.session.user)
 
+    # 🔥 Global override
+    if GAMEPLAN_ADMIN_ROLE not in roles:
+        current_member = frappe.db.get_value(
+            "PMA Member",
+            {"user": frappe.session.user},
+            "name"
+        )
 
-
-    if not any(m.member == current_member and m.role == "Admin" for m in doc.members):
-        frappe.throw("Only Space Admins can manage members")
+        if not any(
+            m.member == current_member and m.role == "Admin"
+            for m in doc.members
+        ):
+            frappe.throw("Only Space Admins can manage members")
 
     for m in doc.members:
         if m.member == member:
@@ -656,6 +666,7 @@ def remove_space_member(space, member):
             return True
 
     frappe.throw("Member not found")
+
 
 
 @frappe.whitelist(allow_guest=True)
