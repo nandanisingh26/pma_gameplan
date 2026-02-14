@@ -1038,3 +1038,28 @@
 .pma-context-item.text-danger {
   color: #d9534f;
 }
+
+
+/*----------------TASKS----------*/
+.pma-task-card {
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  transition: 0.2s ease;
+}
+
+.pma-task-card:hover {
+  background: #fafafa;
+}
+
+.modal-dialog .form-control {
+  border-radius: 8px;
+}
+
+.modal-dialog .modal-footer .btn-primary {
+  width: 100%;
+  border-radius: 8px;
+}
+.pma-task-card:hover {
+  background: #f8f9fa;
+  transition: 0.2s ease;
+}

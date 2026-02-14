@@ -115,12 +115,35 @@ render_spaces_ui($view);
 
 
 /* -------- TASKS -------- */
+
 if (view === "tasks") {
-$view.append(`
-<h3>Tasks</h3>
-<p class="text-muted">Tasks coming soon.</p>
-`);
+
+  $view.append(`
+    <div class="pma-tasks-wrapper">
+
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="mb-0">My Tasks</h3>
+        <button class="btn btn-primary btn-sm" id="create-task-btn">
+          + Add new
+        </button>
+      </div>
+
+      <div class="mb-3">
+        <div class="btn-group btn-group-sm pma-task-filters">
+          <button class="btn btn-light active" data-filter="all">All</button>
+          <button class="btn btn-light" data-filter="assigned">Assigned to me</button>
+          <button class="btn btn-light" data-filter="created">Created by me</button>
+        </div>
+      </div>
+
+      <div id="tasks-container"></div>
+
+    </div>
+  `);
+
+  load_tasks();
 }
+
 
 /* -------- PEOPLE -------- */
 
@@ -170,6 +193,326 @@ function load_people() {
   });
 }
 
+
+/*--------------------tasks----------------------*/
+
+function open_new_task_dialog() {
+  frappe.call({
+    method: "pma_gameplan.api.get_my_spaces",
+    callback: function (r) {
+
+      const spaces = r.message || [];
+
+      const space_options = spaces.map(s => ({
+        label: s.space_name,
+        value: s.name
+      }));
+
+      const d = new frappe.ui.Dialog({
+        title: "New Task",
+        size: "large",
+        fields: [
+
+          {
+            fieldname: "title",
+            label: "Title",
+            fieldtype: "Data",
+            reqd: 1
+          },
+
+          {
+            fieldname: "description",
+            label: "Description",
+            fieldtype: "Small Text"
+          },
+
+          {
+            fieldtype: "Column Break"
+          },
+
+          {
+            fieldname: "assigned_to",
+            label: "Assigned To",
+            fieldtype: "Link",
+            options: "PMA Member"
+          },
+
+          {
+            fieldname: "start_date",
+            label: "Set start date",
+            fieldtype: "Date"
+          },
+
+          {
+            fieldname: "end_date",
+            label: "Set due date",
+            fieldtype: "Date"
+          },
+
+          {
+            fieldtype: "Section Break"
+          },
+
+          {
+            fieldname: "space",
+            label: "Select space",
+            fieldtype: "Select",
+            options: space_options,
+            reqd: 1
+          },
+
+          {
+            fieldname: "status",
+            label: "Status",
+            fieldtype: "Select",
+            options: "Open\nIn Progress\nCompleted",
+            default: "Open"
+          },
+
+          {
+            fieldname: "priority",
+            label: "Priority",
+            fieldtype: "Select",
+            options: "Low\nMedium\nHigh",
+            default: "Medium"
+          }
+
+        ],
+        primary_action_label: "Create",
+        primary_action(values) {
+          frappe.call({
+            method: "pma_gameplan.api.create_task",
+            args: { data: values },
+            callback() {
+              d.hide();
+              load_tasks();
+            }
+          });
+        }
+      });
+
+      d.show();
+    }
+  });
+}
+
+
+
+ function load_tasks() {
+  frappe.call({
+    method: "pma_gameplan.api.get_tasks",
+    args: {
+      filter_type: current_task_filter
+    },
+    callback: function (r) {
+      render_tasks(r.message || []);
+    }
+  });
+}
+
+function render_tasks(tasks) {
+
+  let html = "";
+
+  if (!tasks.length) {
+    html = `<div class="text-muted">No tasks found.</div>`;
+  } else {
+
+    tasks.forEach(task => {
+
+      html += `
+        <div class="pma-task-card card mb-2 p-3"
+             data-name="${task.name}"
+             style="cursor:pointer;">
+
+          <div class="d-flex justify-content-between align-items-center">
+
+            <div>
+              <div class="font-weight-bold mb-1">
+                ${task.title}
+              </div>
+
+              <div class="small d-flex align-items-center gap-2">
+
+                <select class="task-field form-control form-control-sm"
+                        data-field="status"
+                        style="width:auto;">
+                  <option value="Open" ${task.status==="Open"?"selected":""}>Open</option>
+                  <option value="In Progress" ${task.status==="In Progress"?"selected":""}>In Progress</option>
+                  <option value="Completed" ${task.status==="Completed"?"selected":""}>Completed</option>
+                </select>
+
+                <span>•</span>
+
+                <select class="task-field form-control form-control-sm"
+                        data-field="priority"
+                        style="width:auto;">
+                  <option value="Low" ${task.priority==="Low"?"selected":""}>Low</option>
+                  <option value="Medium" ${task.priority==="Medium"?"selected":""}>Medium</option>
+                  <option value="High" ${task.priority==="High"?"selected":""}>High</option>
+                </select>
+
+              </div>
+            </div>
+
+            <div>
+              <select class="task-field form-control form-control-sm"
+                      data-field="progress"
+                      style="width:auto;">
+                <option value="0%" ${task.progress==="0%"?"selected":""}>0%</option>
+                <option value="25%" ${task.progress==="25%"?"selected":""}>25%</option>
+                <option value="50%" ${task.progress==="50"?"selected":""}>50%</option>
+                <option value="75%" ${task.progress==="75%"?"selected":""}>75%</option>
+                <option value="100%" ${task.progress==="100%"?"selected":""}>100%</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  $("#tasks-container").html(html);
+}
+
+
+function open_task_preview_dialog(task_name) {
+
+  frappe.call({
+    method: "pma_gameplan.api.get_task_preview",
+    args: { name: task_name },
+    callback(r) {
+
+      const task = r.message;
+
+      if (!task) return;
+
+      const d = new frappe.ui.Dialog({
+        title: task.title,
+        size: "large",
+        fields: [
+          {
+            fieldtype: "HTML",
+            fieldname: "preview_html"
+          }
+        ],
+        primary_action_label: "Close",
+        primary_action() {
+          d.hide();
+        }
+      });
+
+      d.fields_dict.preview_html.$wrapper.html(`
+        <div class="pma-task-preview">
+
+          <div class="mb-3">
+            <strong>Status:</strong> ${task.status}
+            &nbsp; • &nbsp;
+            <strong>Priority:</strong> ${task.priority}
+            &nbsp; • &nbsp;
+            <strong>Progress:</strong> ${task.progress}
+          </div>
+
+          <div class="mb-3">
+            <strong>Assigned To:</strong> ${task.assigned_to_name || "-"}
+          </div>
+
+          <div class="mb-3">
+            <strong>Start Date:</strong> ${task.start_date || "-"}
+            &nbsp; • &nbsp;
+            <strong>Due Date:</strong> ${task.end_date || "-"}
+          </div>
+
+          <hr>
+
+          <div>
+            <strong>Description</strong>
+            <div class="mt-2">
+              ${task.description || "<span class='text-muted'>No description</span>"}
+            </div>
+          </div>
+
+        </div>
+      `);
+
+      d.show();
+    }
+  });
+
+}
+
+
+
+
+let current_task_filter = "all";
+
+
+$(document).on("click", ".pma-task-filters button", function () {
+
+  $(".pma-task-filters button").removeClass("active");
+  $(this).addClass("active");
+
+  current_task_filter = $(this).data("filter");
+
+  load_tasks();
+});
+
+$(document).on("click", ".pma-task-filters button", function () {
+
+  $(".pma-task-filters button").removeClass("active");
+  $(this).addClass("active");
+
+  current_task_filter = $(this).data("filter");
+
+  load_tasks();
+});
+
+
+
+
+$(document).on("click", "#create-task-btn", function () {
+  open_new_task_dialog();
+});
+
+
+$(document).on("change", ".task-field", function (e) {
+
+  e.stopPropagation();
+
+  const $card = $(this).closest(".pma-task-card");
+  const name = $card.data("name");
+  const field = $(this).data("field");
+  const value = $(this).val();
+
+  frappe.call({
+    method: "pma_gameplan.api.update_task_field",
+    args: { name, field, value },
+    callback() {
+      frappe.show_alert({
+        message: "Updated",
+        indicator: "green"
+      });
+    }
+  });
+
+});
+
+$(document).on("click", ".pma-task-card", function (e) {
+
+  if ($(e.target).is("select")) return;
+
+  const name = $(this).data("name");
+  const is_admin = frappe.user.has_role("Gameplan Admin");
+
+  if (is_admin) {
+    //Admin -> Full Form
+  frappe.set_route("Form", "PMA Task", name);
+  }else{
+    //Member -> Read-only preview
+    open_task_preview_dialog(name);
+  }
+});
 
 
 function render_people(list) {
