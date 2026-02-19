@@ -47,101 +47,114 @@ frappe.pages["pma-gameplan"].on_page_load = function (wrapper) {
 function render_view(view) {
   const $view = $("#pma-view");
   $view.empty();
+
+  /* -------- PEOPLE -------- */
   if (view === "people") {
     const is_admin = frappe.user.has_role("Gameplan Admin");
 
-  $view.append(`
-    <div class="pma-header-bar d-flex justify-content-between align-items-center">
-      <h3>People</h3>
-      ${is_admin ? `
-        <button class="btn btn-primary btn-sm" id="add-pma-member">
-          Add Member
-        </button>
-      ` : ``}
-    </div>
+    $view.append(`
+      <div class="pma-header-bar d-flex justify-content-between align-items-center">
+        <h3>People</h3>
+        ${is_admin ? `
+          <button class="btn btn-primary btn-sm" id="add-pma-member">
+            Add Member
+          </button>
+        ` : ``}
+      </div>
 
-    <input
-      type="text"
-      class="form-control mb-3"
-      id="pma-people-search"
-      placeholder="Search people..."
-    />
+      <input
+        type="text"
+        class="form-control mb-3"
+        id="pma-people-search"
+        placeholder="Search people..."
+      />
 
-    <div id="pma-people-list"></div>
-  `);
+      <div id="pma-people-list"></div>
+    `);
 
-  if (is_admin) {
-    $("#add-pma-member").on("click", open_add_member_dialog);
+    if (is_admin) {
+      $("#add-pma-member").on("click", open_add_member_dialog);
+    }
+
+    load_people();
+    return;
   }
-
-  load_people();
-}
-
 
 /* -------- POSTS -------- */
 if (view === "posts") {
-$view.append(`
-<div class="pma-posts-toolbar">
-<div class="pma-posts-filters">
-<button class="filter-btn active" data-filter="all">All</button>
-<button class="filter-btn" data-filter="unread">Unread</button>
-<button class="filter-btn" data-filter="bookmarked">Bookmarks</button>
-</div>
 
-<div class="pma-posts-actions">
-<select id="post-sort" class="form-control form-control-sm">
-<option value="newest">Newest first</option>
-<option value="oldest">Oldest first</option>
-<option value="creation">Creation date</option>
-</select>
-
-<button class="btn btn-primary btn-sm" id="new-pma-post">
-New Post
-</button>
-</div>
-</div>
-
-<div id="pma-post-feed"></div>
-`);
-
-wire_post_events();
-load_posts();
-}
-
-/* -------- SPACES -------- */
-if (view === "spaces") {
-render_spaces_ui($view);
-}
-
-
-/* -------- TASKS -------- */
-
-if (view === "tasks") {
+  const is_admin = frappe.user.has_role("Gameplan Admin");
 
   $view.append(`
-    <div class="pma-tasks-wrapper">
-
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h3 class="mb-0">My Tasks</h3>
-        <button class="btn btn-primary btn-sm" id="create-task-btn">
-          + Add new
-        </button>
+    <div class="pma-posts-toolbar">
+      <div class="pma-posts-filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="unread">Unread</button>
+        <button class="filter-btn" data-filter="bookmarked">Bookmarks</button>
       </div>
 
-      <div class="mb-3">
-        <div class="btn-group btn-group-sm pma-task-filters">
-          <button class="btn btn-light active" data-filter="all">All</button>
-          <button class="btn btn-light" data-filter="assigned">Assigned to me</button>
-          <button class="btn btn-light" data-filter="created">Created by me</button>
-        </div>
+      <div class="pma-posts-actions">
+        <select id="post-sort" class="form-control form-control-sm">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="creation">Creation date</option>
+        </select>
+
+        ${is_admin ? `
+          <button class="btn btn-primary btn-sm" id="new-pma-post">
+            New Post
+          </button>
+        ` : ``}
       </div>
-
-      <div id="tasks-container"></div>
-
     </div>
+
+    <div id="pma-post-feed"></div>
   `);
 
-  load_tasks();
+  wire_post_events();
+  load_posts();
+    $view.find("#new-pma-post").on("click", function (e) {
+    e.preventDefault();
+    open_new_post_dialog();
+  });
+
+  return;
+}
+
+
+
+  /* -------- SPACES -------- */
+  if (view === "spaces") {
+    render_spaces_ui($view);
+    return;
+  }
+
+  /* -------- TASKS -------- */
+  if (view === "tasks") {
+    $view.append(`
+      <div class="pma-tasks-wrapper">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h3 class="mb-0">My Tasks</h3>
+          <button class="btn btn-primary btn-sm" id="create-task-btn">
+            + Add new
+          </button>
+        </div>
+
+        <div class="mb-3">
+          <div class="btn-group btn-group-sm pma-task-filters">
+            <button class="btn btn-light active" data-filter="all">All</button>
+            <button class="btn btn-light" data-filter="assigned">Assigned to me</button>
+            <button class="btn btn-light" data-filter="created">Created by me</button>
+          </div>
+        </div>
+
+        <div id="tasks-container"></div>
+      </div>
+    `);
+
+    load_tasks();
+    return;
+  }
 }
 
 
@@ -167,6 +180,7 @@ function open_add_member_dialog() {
     ],
     primary_action_label: "Invite",
     primary_action(values) {
+      document.activeElement?.blur();   // 👈 add this
       frappe.call({
         method: "pma_gameplan.api.invite_member",
         args: values,
@@ -180,7 +194,6 @@ function open_add_member_dialog() {
   });
 
   d.show();
-}
 }
 
 function load_people() {
@@ -312,6 +325,8 @@ function open_new_task_dialog() {
 
 function render_tasks(tasks) {
 
+  const is_admin = frappe.user.has_role("Gameplan Admin");
+
   let html = "";
 
   if (!tasks.length) {
@@ -320,62 +335,69 @@ function render_tasks(tasks) {
 
     tasks.forEach(task => {
 
-      html += `
-        <div class="pma-task-card card mb-2 p-3"
-             data-name="${task.name}"
-             style="cursor:pointer;">
+  html += `
+  <div class="pma-task-card card mb-3 p-3"
+       data-name="${task.name}"
+       style="${is_admin ? 'cursor:pointer;' : 'cursor:default;'}">
 
-          <div class="d-flex justify-content-between align-items-center">
+    <div class="task-title font-weight-bold mb-2">
+      ${task.title}
+    </div>
 
-            <div>
-              <div class="font-weight-bold mb-1">
-                ${task.title}
-              </div>
+    <div class="task-meta-row">
 
-              <div class="small d-flex align-items-center gap-2">
+      <div class="task-meta-item">
+        <span class="task-label">Status:</span>
+        <select class="task-field" data-field="status">
+          <option value="Open" ${task.status==="Open"?"selected":""}>Open</option>
+          <option value="In Progress" ${task.status==="In Progress"?"selected":""}>In Progress</option>
+          <option value="Completed" ${task.status==="Completed"?"selected":""}>Completed</option>
+        </select>
+      </div>
 
-                <select class="task-field form-control form-control-sm"
-                        data-field="status"
-                        style="width:auto;">
-                  <option value="Open" ${task.status==="Open"?"selected":""}>Open</option>
-                  <option value="In Progress" ${task.status==="In Progress"?"selected":""}>In Progress</option>
-                  <option value="Completed" ${task.status==="Completed"?"selected":""}>Completed</option>
-                </select>
+      <div class="task-meta-item">
+        <span class="task-label">Priority:</span>
+        <select class="task-field" data-field="priority">
+          <option value="Low" ${task.priority==="Low"?"selected":""}>Low</option>
+          <option value="Medium" ${task.priority==="Medium"?"selected":""}>Medium</option>
+          <option value="High" ${task.priority==="High"?"selected":""}>High</option>
+        </select>
+      </div>
 
-                <span>•</span>
+      <div class="task-meta-item">
+        <span class="task-label">Progress:</span>
+        <select class="task-field" data-field="progress">
+          <option value="0%" ${task.progress==="0%"?"selected":""}>0%</option>
+          <option value="25%" ${task.progress==="25%"?"selected":""}>25%</option>
+          <option value="50%" ${task.progress==="50%"?"selected":""}>50%</option>
+          <option value="75%" ${task.progress==="75%"?"selected":""}>75%</option>
+          <option value="100%" ${task.progress==="100%"?"selected":""}>100%</option>
+        </select>
+      </div>
 
-                <select class="task-field form-control form-control-sm"
-                        data-field="priority"
-                        style="width:auto;">
-                  <option value="Low" ${task.priority==="Low"?"selected":""}>Low</option>
-                  <option value="Medium" ${task.priority==="Medium"?"selected":""}>Medium</option>
-                  <option value="High" ${task.priority==="High"?"selected":""}>High</option>
-                </select>
+    </div>
 
-              </div>
-            </div>
+  </div>
+`;
 
-            <div>
-              <select class="task-field form-control form-control-sm"
-                      data-field="progress"
-                      style="width:auto;">
-                <option value="0%" ${task.progress==="0%"?"selected":""}>0%</option>
-                <option value="25%" ${task.progress==="25%"?"selected":""}>25%</option>
-                <option value="50%" ${task.progress==="50"?"selected":""}>50%</option>
-                <option value="75%" ${task.progress==="75%"?"selected":""}>75%</option>
-                <option value="100%" ${task.progress==="100%"?"selected":""}>100%</option>
-              </select>
-            </div>
 
-          </div>
-        </div>
-      `;
-    });
+});
+
   }
 
   $("#tasks-container").html(html);
-}
 
+if (is_admin) {
+  $(".pma-task-card").on("click", function (e) {
+
+    if ($(e.target).is("select")) return;
+
+    const name = $(this).data("name");
+    frappe.set_route("Form", "PMA Task", name);
+
+  });
+}
+}
 
 function open_task_preview_dialog(task_name) {
 
@@ -458,19 +480,6 @@ $(document).on("click", ".pma-task-filters button", function () {
   load_tasks();
 });
 
-$(document).on("click", ".pma-task-filters button", function () {
-
-  $(".pma-task-filters button").removeClass("active");
-  $(this).addClass("active");
-
-  current_task_filter = $(this).data("filter");
-
-  load_tasks();
-});
-
-
-
-
 $(document).on("click", "#create-task-btn", function () {
   open_new_task_dialog();
 });
@@ -498,21 +507,9 @@ $(document).on("change", ".task-field", function (e) {
 
 });
 
-$(document).on("click", ".pma-task-card", function (e) {
+const is_admin = frappe.user.has_role("Gameplan Admin");
 
-  if ($(e.target).is("select")) return;
 
-  const name = $(this).data("name");
-  const is_admin = frappe.user.has_role("Gameplan Admin");
-
-  if (is_admin) {
-    //Admin -> Full Form
-  frappe.set_route("Form", "PMA Task", name);
-  }else{
-    //Member -> Read-only preview
-    open_task_preview_dialog(name);
-  }
-});
 
 
 function render_people(list) {
@@ -646,20 +643,18 @@ $(document).on("click", ".pma-view-member", function (e) {
 
 
 function wire_post_events() {
-$("#new-pma-post").on("click", open_new_post_dialog);
+  $(document).on("click", ".filter-btn", function () {
+    $(".filter-btn").removeClass("active");
+    $(this).addClass("active");
+    current_filter = $(this).data("filter");
+    load_posts();
+  });
 
-$(".filter-btn").on("click", function () {
-$(".filter-btn").removeClass("active");
-$(this).addClass("active");
+  $(document).on("change", "#post-sort", function () {
+    current_sort = $(this).val();
+    load_posts();
+  });
 
-current_filter = $(this).data("filter");
-load_posts();
-});
-
-$("#post-sort").on("change", function () {
-current_sort = $(this).val();
-load_posts();
-});
 }
 
 
@@ -721,15 +716,12 @@ function open_new_post_dialog(default_space = null) {
     default: "Post"
   },
   {
-    fieldname: "space",
-    label: "Space",
-    fieldtype: "Link",
-    options: "PMA Space",
-    get_query() {
-      return { query: "pma_gameplan.api.get_postable_spaces_link" };
-    },
-    description: "Select a space to post in"
-  },
+  fieldname: "space",
+  label: "Space",
+  fieldtype: "Link",
+  options: "PMA Space",
+  ignore_user_permissions: 1
+},
 
   
 
@@ -760,20 +752,32 @@ function open_new_post_dialog(default_space = null) {
     `
   }
 ],
-primary_action_label: "Publish",
-    primary_action(values) {
-      frappe.call({
-        method: "pma_gameplan.api.create_post",
-        args: {
-title: values.title,
-    post_type: values.post_type,
-    content: values.content,
-    space: values.space,   // ✅ sent correctly
-    attachments: uploaded_files
-  },
-        callback() {
+  primary_action_label: "Publish",
+  primary_action(values) {
+
+    if (!values.title) {
+      frappe.msgprint("Title is required");
+      return;
+    }
+
+    frappe.call({
+      method: "pma_gameplan.api.create_post",
+      args: {
+        title: values.title,
+        content: values.content,
+        post_type: values.post_type,
+        space: values.space || null,
+        attachments: uploaded_files || []
+      },
+      callback: function (r) {
+
+        if (!r.exc) {
           dialog.hide();
-          frappe.show_alert({ message: "Post published", indicator: "green" });
+
+          frappe.show_alert({
+            message: "Post published",
+            indicator: "green"
+          });
 
           if (values.space) {
             load_space_posts(values.space);
@@ -781,29 +785,35 @@ title: values.title,
             load_posts();
           }
         }
+      }
+    });
+
+  }   // ✅ CLOSE primary_action
+
+});   // ✅ CLOSE Dialog config
+
+dialog.show();
+
+
+dialog.$wrapper.find("#add-attachment").on("click", function () {
+
+  new frappe.ui.FileUploader({
+    dialog: true,
+    multiple: true,
+    make_attachments_public: true,
+    on_success(file) {
+
+      uploaded_files.push({
+        file: file.file_url,
+        file_name: file.file_name,
+        file_type: file.file_type
       });
+
     }
   });
 
-  dialog.show();
-
-  dialog.$wrapper.find("#add-attachment").on("click", function () {
-    new frappe.ui.FileUploader({
-      dialog: true,
-      multiple: true,
-      on_success(file) {
-        uploaded_files.push({
-          file: file.file_url,
-          file_name: file.file_name,
-          file_type: file.file_type
-        });
-      }
-    });
-  });
+});
 }
-
-
-
 
 function open_edit_post_dialog(post_name) {
 frappe.call({
@@ -968,14 +978,17 @@ d.show();
 
 function load_spaces() {
   frappe.call({
-    method: "pma_gameplan.api.get_my_spaces",
-    callback(r) {
+    method: "pma_gameplan.api.get_spaces",
+    args: {
+      filter_type: current_space_filter
+    },
+    callback: function (r) {
       all_spaces = r.message || [];
-      window.all_spaces = all_spaces;   // 🔴 REQUIRED
-      render_spaces_list();
+      render_spaces_list();   // ✅ THIS ONLY
     }
   });
 }
+
 
 function render_spaces_list() {
   const list = $(".pma-spaces-list");
@@ -987,9 +1000,10 @@ function render_spaces_list() {
     filtered = all_spaces.filter(s => !s.is_private);
   }
 
-  if (current_space_filter === "private") {
-    filtered = all_spaces.filter(s => s.is_private && s.is_member);
-  }
+ if (current_space_filter === "private") {
+  filtered = all_spaces.filter(s => s.is_private);
+}
+
 
   if (current_space_filter === "archived") {
     filtered = [];
@@ -1241,11 +1255,14 @@ function open_add_space_member_dialog(space, parent_dialog) {
 function render_spaces_ui($view) {
   $view.append(`
     <div class="pma-spaces-header d-flex justify-content-between align-items-center mb-3">
-      <h3>Spaces</h3>
-      <button class="btn btn-primary btn-sm pma-add-space">
-        + Add new
-      </button>
-    </div>
+  <h3>Spaces</h3>
+  ${frappe.user.has_role("Gameplan Admin") ? `
+    <button class="btn btn-primary btn-sm pma-add-space">
+      + Add new
+    </button>
+  ` : ``}
+</div>
+
 
     <div class="pma-spaces-toolbar mb-3">
       <input class="form-control mb-2"
@@ -1263,36 +1280,44 @@ function render_spaces_ui($view) {
 
   load_spaces();
 
+
   $view.find(".pma-add-space").on("click", open_new_space_dialog);
 
-    $view.find(".pma-space-filters button").on("click", function () {
-    $view.find(".pma-space-filters button").removeClass("active");
-    $(this).addClass("active");
+  $view.find(".pma-space-filters button").on("click", function () {
+  $view.find(".pma-space-filters button").removeClass("active");
+  $(this).addClass("active");
 
-    current_space_filter = $(this).data("filter");
-    render_spaces_list();
-  });
+  current_space_filter = $(this).data("filter");
+
+  load_spaces();   // ✅ CALL BACKEND AGAIN
+});
+
 }
 
 function render_comment(comment, level = 0) {
-const margin = level * 24;
+  const margin = level * 24;
 
-let html = `
-<div class="pma-comment" data-comment="${comment.name}"
-style="margin-left:${margin}px">
-<div class="pma-comment-meta">
-<strong>${comment.author_name}</strong>
-<span class="text-muted">
-• ${frappe.datetime.str_to_user(comment.creations)}
-</span>
-</div>
+  let html = `
+  <div class="pma-comment"
+       data-comment="${comment.name}"
+       data-author="${comment.author}"
+       style="margin-left:${margin}px">
 
-<div class="pma-comment-content">
-${link_mentions(comment.content)}
-</div>
+    <div class="pma-comment-meta">
+      <strong>${comment.author_name}</strong>
+      <span class="text-muted">
+        • ${frappe.datetime.str_to_user(comment.creation)}
+      </span>
 
-<span class="pma-reply-btn text-muted">Reply</span>
-`;
+      <span class="pma-comment-menu-trigger">⋯</span>
+    </div>
+
+    <div class="pma-comment-content">
+      ${link_mentions(comment.content)}
+    </div>
+
+    <span class="pma-reply-btn text-muted">Reply</span>
+  `;
 
 if (comment.replies?.length) {
 comment.replies.forEach(r => {
@@ -1317,6 +1342,90 @@ return text.replace(
 `<a href="/app/user/$1" class="pma-mention">@$1</a>`
 );
 }
+/*------------------dropdown toggle logic-------------- */
+$(document).on("click", ".pma-comment-menu-trigger", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    $(".pma-comment-menu").remove(); // close others
+
+    const $comment = $(this).closest(".pma-comment");
+    const commentName = $comment.data("comment");
+    const author = $comment.data("author");
+
+    const isAuthor = author === frappe.session.user;
+    const isAdmin = frappe.user.has_role("Gameplan Admin");
+
+    if (!isAuthor && !isAdmin) return;
+
+    const $menu = $(`
+        <div class="pma-comment-menu">
+            <div class="pma-edit-comment">Edit</div>
+            <div class="pma-delete-comment text-danger">Delete</div>
+        </div>
+    `);
+
+    $comment.append($menu);
+});
+$(document).on("click", function () {
+    $(".pma-comment-menu").remove();
+});
+
+/*--------delete comment------*/
+$(document).on("click", ".pma-delete-comment", function (e) {
+    e.stopPropagation();
+
+    const comment = $(this).closest(".pma-comment").data("comment");
+
+    frappe.confirm("Delete this comment?", () => {
+        frappe.call({
+            method: "pma_gameplan.api.delete_comment",
+            args: { name: comment },
+            callback: function () {
+                load_posts();
+            }
+        });
+    });
+});
+
+
+/*-------------------edit comment inline-------------------------*/
+$(document).on("click", ".pma-edit-comment", function (e) {
+    e.stopPropagation();
+
+    const $comment = $(this).closest(".pma-comment");
+    const commentName = $comment.data("comment");
+    const currentText = $comment.find(".pma-comment-content").text();
+
+    $comment.find(".pma-comment-content").html(`
+        <textarea class="pma-edit-input form-control"
+            rows="2">${currentText}</textarea>
+        <button class="btn btn-primary btn-xs mt-1 pma-save-comment">
+            Save
+        </button>
+    `);
+});
+$(document).on("click", ".pma-save-comment", function () {
+
+    const $comment = $(this).closest(".pma-comment");
+    const commentName = $comment.data("comment");
+    const newContent = $comment.find(".pma-edit-input").val();
+
+    frappe.call({
+        method: "pma_gameplan.api.update_comment",
+        args: {
+            name: commentName,
+            content: newContent
+        },
+        callback: function () {
+            load_posts();
+        }
+    });
+});
+
+
+
 
 function render_post_card(post) {
 const is_admin = frappe.user.has_role("Gameplan Admin");
@@ -1332,23 +1441,23 @@ const attachments_html = (post.attachments || [])
 .join("");
 
 const $card = $(`
-<div class="pma-post-card ${is_admin ? "editable" : ""}"
-data-post="${post.name}"
-style=" "
+<div class="pma-post-card" data-post="${post.name}">
 
-<strong>${post.title}</strong>
+  <div class="pma-post-main">
+      <strong>${post.title}</strong>
 
-<div class="text-muted">
-${post.author_name} • ${frappe.datetime.str_to_user(post.published_on)}
-</div>
+      <div class="text-muted">
+        ${post.author_name} • ${frappe.datetime.str_to_user(post.published_on)}
+      </div>
 
-<div class="pma-post-content"></div>
+      <div class="pma-post-content"></div>
+  </div>
 
-${attachments_html ? `
-<ul class="pma-post-attachments">
-${attachments_html}
-</ul>
-` : ""}
+  ${attachments_html ? `
+    <ul class="pma-post-attachments">
+      ${attachments_html}
+    </ul>
+  ` : ""}
 
 <!-- ACTIONS -->
 <div class="pma-post-actions">
@@ -1376,9 +1485,8 @@ ${attachments_html}
 </div>
 `);
 
-$card.find(".pma-post-content").html(
-linkify_urls(post.content || "")
-);
+$card.find(".pma-post-content").html(post.content || "");
+
 
 frappe.call({
 method: "pma_gameplan.api.get_reaction_summary",
@@ -1423,11 +1531,14 @@ function render_space_feed(space) {
       <h3 class="pma-space-title">${space}</h3>
     </div>
 
-    <div class="pma-posts-toolbar mb-2">
-      <button class="btn btn-primary btn-sm new-space-post">
-        New Post
-      </button>
-    </div>
+    ${frappe.user.has_role("Gameplan Admin") ? `
+  <div class="pma-posts-toolbar mb-2">
+    <button class="btn btn-primary btn-sm new-space-post">
+      New Post
+    </button>
+  </div>
+` : ``}
+
 
     <div class="pma-posts-list"></div>
   `);
@@ -1577,32 +1688,34 @@ $btn.attr("title", `Liked by ${users}`);
 ✅ FIX 3 — COMMENT TOGGLE (SAFE VERSION)
 ===================================================== */
 $(document).on("click", ".pma-comment-toggle", function (e) {
-e.preventDefault();
-e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();   // 🔥 THIS FIXES IT
 
-const $card = $(this).closest(".pma-post-card");
-const $comments = $card.find(".pma-comments-container");
+    const $card = $(this).closest(".pma-post-card");
+    const $comments = $card.find(".pma-comments-container");
 
-$(".pma-comments-container").not($comments).hide();
-$(".pma-comment-box").remove();
+    $(".pma-comments-container").not($comments).hide();
+    $(".pma-comment-box").remove();
 
-$comments.toggle();
+    $comments.toggle();
 
-if ($card.find(".pma-comment-box").length) return;
+    if ($card.find(".pma-comment-box").length) return;
 
-const $box = $(`
-<div class="pma-comment-box mt-2">
-<textarea class="pma-comment-input"
-rows="2"
-placeholder="Write a comment..."></textarea>
-<button class="btn btn-primary btn-xs mt-2 pma-submit-comment">
-Post
-</button>
-</div>
-`);
+    const $box = $(`
+        <div class="pma-comment-box mt-2">
+            <textarea class="pma-comment-input"
+                rows="2"
+                placeholder="Write a comment..."></textarea>
+            <button class="btn btn-primary btn-xs mt-2 pma-submit-comment">
+                Post
+            </button>
+        </div>
+    `);
 
-$comments.append($box);
+    $comments.append($box);
 });
+
 
 /* ---------- SUBMIT COMMENT ---------- */
 $(document).on("click", ".pma-submit-comment", function (e) {
@@ -1635,8 +1748,9 @@ load_posts();
 REPLY BUTTON
 ===================================================== */
 $(document).on("click", ".pma-reply-btn", function (e) {
-e.preventDefault();
-e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();   // 🔥 critical
 
 $(".pma-reply-box").remove();
 
@@ -1689,20 +1803,16 @@ callback: load_posts
 POST CARD CLICK — ADMIN EDIT (LAST, ALWAYS LAST)
 ===================================================== */
 /* ---------- ALLOW LINK CLICKS INSIDE POSTS ---------- */
-$(document).on("click", ".pma-post-card a", function (e) {
-e.stopPropagation(); // ⛔ prevent admin edit
+$(document).on("click", ".pma-post-main", function () {
+
+    if (!frappe.user.has_role("Gameplan Admin")) return;
+
+    const post = $(this).closest(".pma-post-card").data("post");
+
+    open_edit_post_dialog(post);
 });
 
-$(document).on("click", ".pma-post-card", function (e) {
-if (!frappe.user.has_role("Gameplan Admin")) return;
 
-if (
-$(e.target).closest(
-".pma-reaction-btn, .pma-comment-toggle, button, textarea, input"
-).length
-) {
-return;
-}
 
-open_edit_post_dialog($(this).data("post"));
-});
+window.open_new_post_dialog = open_new_post_dialog;
+

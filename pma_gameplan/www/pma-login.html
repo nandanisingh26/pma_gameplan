@@ -36,7 +36,7 @@ Your internal workspace for smarter teamwork.
 <script>
 const allowedDomains = ["pma.com", "pmaindia.com"];
 
-const emailInput = document.querySelector("input[name='email']");
+const emailInput = document.getElementById("email");
 const emailError = document.getElementById("email-error");
 
 emailInput.addEventListener("input", function () {
@@ -56,16 +56,6 @@ emailInput.addEventListener("input", function () {
   }
 });
 
-/* Block submit if invalid */
-document.getElementById("pma-register-form").addEventListener("submit", function (e) {
-  const value = emailInput.value.toLowerCase();
-  const domain = value.split("@").pop();
-
-  if (!allowedDomains.includes(domain)) {
-    e.preventDefault();
-    frappe.msgprint("Registration allowed only with company email address");
-  }
-});
 </script>
 
 <div class="pma-field">

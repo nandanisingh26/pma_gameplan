@@ -94,11 +94,7 @@
 }
 
 /* Keep attachments safely below */
-.pma-attachments {/* =========================================================
-   PMA GAMEPLAN – SAFE DESK STYLES
-   ========================================================= */
-
-/* Root page wrapper */
+.pma-attachments {
 .pma-gameplan-page {
   padding: 0;
 }
@@ -255,44 +251,53 @@
 .pma-comment-toggle:hover {
   text-decoration: underline;
 }
+/* ================= COMMENT MENU ================= */
 
-
-/* ================= COMMENT BOX ================= */
-
-.pma-comment-box {
-  border-top: 1px solid #eee;
-  padding-top: 8px;
+.pma-comment {
+    position: relative;
+    padding: 6px 0;
 }
 
-.pma-comment-box .ql-container {
-  min-height: 80px;
+.pma-comment-meta {
+    position: relative;
 }
 
-.pma-comment-input {
-  width: 100%;
-  border-radius: 6px;
-  border: 1px solid #d1d8dd;
-  padding: 8px;
-  font-size: 13px;
-  resize: vertical;
+.pma-comment-menu-trigger {
+    position: absolute;
+    right: 0;
+    top: 0;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #888;
 }
 
-
-.pma-comment-input:focus {
-  outline: none;
-  border-color: #5e64ff;
+.pma-comment-menu-trigger:hover {
+    background: #f3f4f6;
+    color: #000;
 }
 
-.pma-mention {
-  color: #1f7ae0;
-  font-weight: 500;
-  cursor: pointer;
+.pma-comment-menu {
+    position: absolute;
+    right: 0;
+    top: 22px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 9999;
+    min-width: 120px;
 }
-.pma-comment-count {
-  margin-left: 2px;
-  color: var(--text-muted);
-  font-size: 12px;
+
+.pma-comment-menu div {
+    padding: 6px 10px;
+    cursor: pointer;
 }
+
+.pma-comment-menu div:hover {
+    background: #f3f4f6;
+}
+
 
 /* ---------------- PEOPLE ---------------- */
 
@@ -452,6 +457,16 @@
   padding-bottom: 8px;
   border-bottom: 1px solid #e5e7eb;
 }
+
+.pma-posts-filters {
+  flex: 0 0 auto;
+}
+
+.pma-posts-actions {
+  flex: 0 0 auto;
+}
+
+
 
 /* ---------- FILTER TABS ---------- */
 
@@ -680,43 +695,56 @@
   text-decoration: underline;
 }
 
+/* ================= COMMENT MENU ================= */
 
-/* ================= COMMENT BOX ================= */
-
-.pma-comment-box {
-  border-top: 1px solid #eee;
-  padding-top: 8px;
+.pma-comment {
+    position: relative;
+    padding: 6px 0;
 }
 
-.pma-comment-box .ql-container {
-  min-height: 80px;
+.pma-comment-meta {
+    position: relative;
 }
 
-.pma-comment-input {
-  width: 100%;
-  border-radius: 6px;
-  border: 1px solid #d1d8dd;
-  padding: 8px;
-  font-size: 13px;
-  resize: vertical;
+.pma-comment-menu-trigger {
+    position: absolute;
+    right: 0;
+    top: 0;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #888;
 }
 
-
-.pma-comment-input:focus {
-  outline: none;
-  border-color: #5e64ff;
+.pma-comment-menu-trigger:hover {
+    background: #f3f4f6;
+    color: #000;
 }
 
-.pma-mention {
-  color: #1f7ae0;
-  font-weight: 500;
-  cursor: pointer;
+.pma-comment-menu {
+    position: absolute;
+    right: 0;
+    top: 22px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 9999;
+    min-width: 120px;
 }
-.pma-comment-count {
-  margin-left: 2px;
-  color: var(--text-muted);
-  font-size: 12px;
+
+.pma-comment-menu div {
+    padding: 6px 10px;
+    cursor: pointer;
 }
+
+.pma-comment-menu div:hover {
+    background: #f3f4f6;
+}
+.pma-comments-container {
+    overflow: visible !important;
+}
+
 
 /* ---------------- PEOPLE ---------------- */
 
@@ -867,24 +895,56 @@
 /* ===================================================== */
 /* PMA GAMEPLAN – POSTS TOOLBAR (OVERRIDE FRAPPE DESK)   */
 /* ===================================================== */
+.main-section {
+  overflow: visible !important;
+}
+
+.pma-content {
+  overflow: visible !important;
+}
+
+.pma-gameplan-page {
+  height: auto !important;
+}
+
+.pma-content {
+  overflow: visible !important;
+}
+.main-section {
+  overflow: visible !important;
+}
+
 
 .pma-gameplan-page .pma-posts-toolbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e5e7eb;
+  justify-content: space-between;
 }
+
+.pma-posts-toolbar > * {
+  position: relative;
+  z-index: 1;
+}
+.pma-posts-toolbar {
+  position: relative;
+  z-index: 20;
+}
+
+.pma-posts-filters {
+  pointer-events: auto;
+}
+
+.pma-posts-actions {
+  pointer-events: auto;
+}
+
+
 
 /* ---------- FILTER TABS ---------- */
 
 .pma-gameplan-page .pma-posts-filters {
   display: inline-flex;
-  background: #f3f4f6;
-  padding: 4px;
-  border-radius: 8px;
-  gap: 4px;
+  flex-shrink: 0;
 }
 
 .pma-gameplan-page .pma-posts-filters button.filter-btn {
@@ -915,8 +975,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
-
 /* Sort dropdown */
 .pma-gameplan-page #post-sort {
   height: 30px;
@@ -1040,7 +1100,8 @@
 }
 
 
-/*----------------TASKS----------*/
+/* ---------------- TASKS ---------------- */
+
 .pma-task-card {
   border-radius: 8px;
   border: 1px solid #e5e5e5;
@@ -1048,18 +1109,41 @@
 }
 
 .pma-task-card:hover {
-  background: #fafafa;
-}
-
-.modal-dialog .form-control {
-  border-radius: 8px;
-}
-
-.modal-dialog .modal-footer .btn-primary {
-  width: 100%;
-  border-radius: 8px;
-}
-.pma-task-card:hover {
   background: #f8f9fa;
-  transition: 0.2s ease;
 }
+
+/* 🔥 FORCE HORIZONTAL LAYOUT */
+.task-meta-row {
+  display: flex;
+  flex-direction: row;      /* force row */
+  align-items: center;
+  justify-content: flex-start;
+  gap: 40px;
+}
+
+/* 🔥 EACH BLOCK INLINE */
+.task-meta-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Label styling */
+.task-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6c757d;
+  margin: 0;
+}
+
+/* 🔥 SMALL DROPDOWNS */
+.task-field {
+  width: 110px !important;
+  height: 28px;
+  font-size: 13px;
+  padding: 2px 6px;
+  display: inline-block !important;
+}
+
+

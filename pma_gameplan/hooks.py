@@ -14,6 +14,11 @@ doc_events = {
     }
 }
 
+doc_events = {
+    "File": {
+        "after_insert": "pma_gameplan.file_hooks.make_pma_files_public"
+    }
+}
 
 
 fixtures = [
