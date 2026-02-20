@@ -77,6 +77,11 @@ def get_branch_spaces():
 
 @frappe.whitelist()
 def create_post(title, content, post_type="Post", space=None, attachments=None):
+
+    # 🔐 ADMIN ONLY
+    if "Gameplan Admin" not in frappe.get_roles():
+        frappe.throw("Only Gameplan Admin can create posts")
+
     post = frappe.new_doc("PMA Post")
     post.title = title
     post.content = content
@@ -84,7 +89,6 @@ def create_post(title, content, post_type="Post", space=None, attachments=None):
     post.author = frappe.session.user
     post.published_on = now_datetime()
 
-    # ✅ SAFE assignment
     if space:
         post.space = space
 
@@ -101,6 +105,7 @@ def create_post(title, content, post_type="Post", space=None, attachments=None):
 
     post.insert(ignore_permissions=True)
     return post.name
+
 
 
 @frappe.whitelist()
@@ -184,8 +189,37 @@ from frappe import publish_realtime
 
 @frappe.whitelist()
 def react_to_post(post, reaction):
-    user = frappe.session.user
 
+    user = frappe.session.user
+    roles = frappe.get_roles(user)
+
+    post_doc = frappe.get_doc("PMA Post", post)
+    space = post_doc.space
+
+    # 🔓 Admin override
+    if "Gameplan Admin" not in roles:
+
+        member = frappe.db.get_value(
+            "PMA Member",
+            {"user": user},
+            "name"
+        )
+
+        if not member:
+            frappe.throw("Not a PMA Member")
+
+        is_member = frappe.db.exists(
+            "PMA Space Member",
+            {
+                "parent": space,
+                "member": member
+            }
+        )
+
+        if not is_member:
+            frappe.throw("Not allowed to react in this space")
+
+    # ✅ Existing logic
     existing = frappe.db.get_value(
         "PMA Post Reaction",
         {"post": post, "reaction": reaction, "user": user},
@@ -204,13 +238,8 @@ def react_to_post(post, reaction):
         }).insert(ignore_permissions=True)
         action = "added"
 
-    publish_realtime(
-        event="pma_post_reaction_update",
-        message={"post": post},
-        after_commit=True
-    )
-
     return {"status": action}
+
 
 
 @frappe.whitelist()
@@ -241,13 +270,46 @@ def get_reaction_users(post, reaction):
 
 @frappe.whitelist()
 def add_comment(post, content, parent_comment=None):
+
+    user = frappe.session.user
+    roles = frappe.get_roles(user)
+
+    post_doc = frappe.get_doc("PMA Post", post)
+    space = post_doc.space
+
+    # 🔓 Admin override
+    if "Gameplan Admin" not in roles:
+
+        member = frappe.db.get_value(
+            "PMA Member",
+            {"user": user},
+            "name"
+        )
+
+        if not member:
+            frappe.throw("Not a PMA Member")
+
+        is_member = frappe.db.exists(
+            "PMA Space Member",
+            {
+                "parent": space,
+                "member": member
+            }
+        )
+
+        if not is_member:
+            frappe.throw("Not allowed to comment in this space")
+
+    # ✅ Create comment
     doc = frappe.new_doc("PMA Post Comment")
     doc.post = post
     doc.content = content
     doc.parent_comment = parent_comment
-    doc.author = frappe.session.user
+    doc.author = user
     doc.insert(ignore_permissions=True)
+
     return doc.name
+
 
 
 @frappe.whitelist()
@@ -473,26 +535,32 @@ def get_spaces(filter_type="public"):
         "name"
     )
 
-    # PUBLIC
+    # ---------------- PUBLIC ----------------
     if filter_type == "public":
         return frappe.get_all(
             "PMA Space",
-            filters={"is_private": 0},
-            fields=["name", "space_name", "is_private"]
+            filters={
+                "is_private": 0,
+                "is_archived": 0
+            },
+            fields=["name", "space_name", "is_private", "is_archived"]
         )
 
-    # PRIVATE
+    # ---------------- PRIVATE ----------------
     if filter_type == "private":
 
-        # Admin → see all private spaces
+        # Admin → see all private (not archived)
         if "Gameplan Admin" in roles:
             return frappe.get_all(
                 "PMA Space",
-                filters={"is_private": 1},
-                fields=["name", "space_name", "is_private"]
+                filters={
+                    "is_private": 1,
+                    "is_archived": 0
+                },
+                fields=["name", "space_name", "is_private", "is_archived"]
             )
 
-        # Member → only joined private spaces
+        # Member → only joined private (not archived)
         if not member:
             return []
 
@@ -509,19 +577,22 @@ def get_spaces(filter_type="public"):
             "PMA Space",
             filters={
                 "name": ["in", space_names],
-                "is_private": 1
+                "is_private": 1,
+                "is_archived": 0
             },
-            fields=["name", "space_name", "is_private"]
+            fields=["name", "space_name", "is_private", "is_archived"]
         )
 
-    # ARCHIVED
+    # ---------------- ARCHIVED ----------------
     if filter_type == "archived":
         return frappe.get_all(
             "PMA Space",
             filters={"is_archived": 1},
-            fields=["name", "space_name", "is_private"]
-            )
+            fields=["name", "space_name", "is_private", "is_archived"]
+        )
+
     return []
+
 
 
 @frappe.whitelist()
@@ -615,6 +686,17 @@ def get_my_spaces():
 
     return spaces
 
+@frappe.whitelist()
+def toggle_archive_space(space, archive=1):
+    doc = frappe.get_doc("PMA Space", space)
+
+    if GAMEPLAN_ADMIN_ROLE not in frappe.get_roles():
+        frappe.throw("Not permitted")
+
+    doc.is_archived = int(archive)
+    doc.save(ignore_permissions=True)
+
+    return True
 
 
 @frappe.whitelist()
@@ -659,13 +741,58 @@ def add_space_member(space, user, role="Member"):
 
 @frappe.whitelist()
 def get_space_posts(space, limit=20):
-    return frappe.get_all(
+
+    user = frappe.session.user
+    roles = frappe.get_roles(user)
+
+    # 🔐 Access validation (keep your existing membership check here)
+
+    posts = frappe.get_all(
         "PMA Post",
         filters={"space": space},
-        fields=["name", "title", "content", "author", "creation"],
-        order_by="creation desc",
+        fields=[
+            "name",
+            "title",
+            "content",
+            "post_type",
+            "author",
+            "published_on"
+        ],
+        order_by="published_on desc",
         limit=limit
     )
+
+    for p in posts:
+
+        # Attachments
+        p.attachments = frappe.get_all(
+            "PMA Post Attachment",
+            filters={
+                "parent": p.name,
+                "parenttype": "PMA Post"
+            },
+            fields=["file", "file_name", "file_type"]
+        )
+
+        # Author full name
+        try:
+            user_doc = frappe.get_cached_doc("User", p.author)
+            p.author_name = (
+                user_doc.full_name
+                or user_doc.first_name
+                or p.author
+            )
+        except frappe.DoesNotExistError:
+            p.author_name = p.author
+
+        # Comment count
+        p.comment_count = frappe.db.count(
+            "PMA Post Comment",
+            {"post": p.name}
+        )
+
+    return posts
+
 
 @frappe.whitelist()
 def get_space_members(space):

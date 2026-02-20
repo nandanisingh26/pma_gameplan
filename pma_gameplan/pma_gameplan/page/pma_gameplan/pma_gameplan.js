@@ -996,17 +996,19 @@ function render_spaces_list() {
 
   let filtered = all_spaces;
 
+  // Public = not private AND not archived
   if (current_space_filter === "public") {
-    filtered = all_spaces.filter(s => !s.is_private);
+    filtered = all_spaces.filter(s => !s.is_private && !s.is_archived);
   }
 
- if (current_space_filter === "private") {
-  filtered = all_spaces.filter(s => s.is_private);
-}
+  // Private = private AND not archived
+  if (current_space_filter === "private") {
+    filtered = all_spaces.filter(s => s.is_private && !s.is_archived);
+  }
 
-
+  // Archived = archived only
   if (current_space_filter === "archived") {
-    filtered = [];
+    filtered = all_spaces.filter(s => s.is_archived);
   }
 
   if (!filtered.length) {
@@ -1029,6 +1031,7 @@ function render_spaces_list() {
     `);
   });
 }
+
 
 
 function show_space_menu(target, items) {
@@ -1085,7 +1088,7 @@ reqd: 1
 fieldtype: "Check",
 fieldname: "is_private",
 label: "Keep it private — Only visible to members"
-}
+},
 ],
 primary_action_label: "Create",
 primary_action(values) {
@@ -1592,7 +1595,7 @@ $(document).on("click", ".pma-space-menu-btn", function (e) {
   e.stopPropagation();
 
   const space = $(this).data("space");
-  const is_admin = Number($(this).data("is-admin")) === 1;
+  const spaceObj = all_spaces.find(s => s.name === space);
 
   const items = [
     { label: "Edit", action: () => open_edit_space_dialog?.(space) },
@@ -1602,18 +1605,35 @@ $(document).on("click", ".pma-space-menu-btn", function (e) {
 
   const is_gameplan_admin = frappe.user.has_role("Gameplan Admin");
   const is_space_admin = Number($(this).data("is-admin")) === 1;
-  if (is_gameplan_admin || is_space_admin) {
-    items.push(
-    { label: "Manage Members", action: () => manage_space_members?.(space) },
-    { label: "Change Category", action: () => {} },
-    { label: "Archive", action: () => {} },
-    { label: "Delete", class: "text-danger", action: () => delete_space(space) }
-  );
-}
 
+  if (is_gameplan_admin || is_space_admin) {
+
+    items.push(
+      { label: "Manage Members", action: () => manage_space_members(space) },
+
+      {
+        label: spaceObj?.is_archived ? "Unarchive" : "Archive",
+        action: () => {
+          frappe.call({
+            method: "pma_gameplan.api.toggle_archive_space",
+            args: {
+              space,
+              archive: spaceObj?.is_archived ? 0 : 1
+            },
+            callback: () => load_spaces()
+          });
+        }
+      },
+
+      { label: "Delete", class: "text-danger", action: () => delete_space(space) }
+    );
+
+  }
 
   show_space_menu(this, items);
 });
+
+
 
 function delete_space(space_name) {
   frappe.confirm(
@@ -1660,7 +1680,26 @@ const reaction = $(this).data("reaction");
 frappe.call({
 method: "pma_gameplan.api.react_to_post",
 args: { post, reaction },
-callback: load_posts
+callback: function () {
+
+  const $card = $(e.target).closest(".pma-post-card");
+  const post = $card.data("post");
+
+  frappe.call({
+    method: "pma_gameplan.api.get_reaction_summary",
+    args: { post },
+    callback(r) {
+      const data = r.message || {};
+
+      Object.entries(data).forEach(([emoji, count]) => {
+        $card
+          .find(`.pma-reaction-btn[data-reaction="${emoji}"] .count`)
+          .text(count);
+      });
+    }
+  });
+
+}
 });
 });
 
@@ -1737,9 +1776,32 @@ args: {
 post,
 content
 },
-callback() {
-load_posts();
+callback: function () {
+
+  const $card = $(e.target).closest(".pma-post-card");
+  const post = $card.data("post");
+
+  // Reload only comments for this card
+  frappe.call({
+    method: "pma_gameplan.api.get_comments",
+    args: { post },
+    callback(r) {
+
+      const list = $card.find(".pma-comments-list");
+      list.empty();
+
+      (r.message || []).forEach(c => {
+        list.append(render_comment(c));
+      });
+
+      // Update comment count
+      const count = r.message.length;
+      $card.find(".pma-comment-count").text(count);
+    }
+  });
+
 }
+
 });
 });
 
@@ -1795,7 +1857,27 @@ if (!content) return;
 frappe.call({
 method: "pma_gameplan.api.add_comment",
 args: { post, content, parent_comment },
-callback: load_posts
+callback: function () {
+
+  const $card = $(e.target).closest(".pma-post-card");
+  const post = $card.data("post");
+
+  frappe.call({
+    method: "pma_gameplan.api.get_reaction_summary",
+    args: { post },
+    callback(r) {
+      const data = r.message || {};
+
+      Object.entries(data).forEach(([emoji, count]) => {
+        $card
+          .find(`.pma-reaction-btn[data-reaction="${emoji}"] .count`)
+          .text(count);
+      });
+    }
+  });
+
+}
+
 });
 });
 
