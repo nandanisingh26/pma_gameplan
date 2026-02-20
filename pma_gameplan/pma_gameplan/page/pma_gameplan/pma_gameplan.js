@@ -244,11 +244,19 @@ function open_new_task_dialog() {
           },
 
           {
-            fieldname: "assigned_to",
-            label: "Assigned To",
-            fieldtype: "Link",
-            options: "PMA Member"
-          },
+  fieldname: "assigned_to",
+  label: "Assigned To",
+  fieldtype: "Link",
+  options: "PMA Member",
+  get_query: function () {
+    return {
+      query: "pma_gameplan.api.get_assignable_members",
+      filters: {
+        space: cur_space // pass selected space if needed
+      }
+    };
+  }
+},
 
           {
             fieldname: "start_date",

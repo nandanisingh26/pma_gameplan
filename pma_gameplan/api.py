@@ -10,10 +10,39 @@ ALLOWED_EMAIL_DOMAINS = ["prettl.com"]
 # ---------------- POSTS ----------------
 
 import frappe
+
 @frappe.whitelist()
 def get_posts(filter="all", sort="newest", limit=20):
+
+    user = frappe.session.user
+    roles = frappe.get_roles(user)
+
     filters = {}
 
+    # 🔐 Restrict members to their spaces only
+    if "Gameplan Admin" not in roles:
+
+        member = frappe.db.get_value(
+            "PMA Member",
+            {"user": user},
+            "name"
+        )
+
+        if not member:
+            return []
+
+        space_names = frappe.get_all(
+            "PMA Space Member",
+            filters={"member": member},
+            pluck="parent"
+        )
+
+        if not space_names:
+            return []
+
+        filters["space"] = ["in", space_names]
+
+    # Bookmarked filter (if you use it)
     if filter == "bookmarked":
         filters["is_bookmarked"] = 1
 
@@ -32,13 +61,16 @@ def get_posts(filter="all", sort="newest", limit=20):
             "content",
             "post_type",
             "author",
-            "published_on"
+            "published_on",
+            "space"
         ],
         order_by=order_by,
         limit=limit
     )
 
+    # Enrich posts (same logic you already had)
     for p in posts:
+
         p.attachments = frappe.get_all(
             "PMA Post Attachment",
             filters={
@@ -745,7 +777,28 @@ def get_space_posts(space, limit=20):
     user = frappe.session.user
     roles = frappe.get_roles(user)
 
-    # 🔐 Access validation (keep your existing membership check here)
+    # 🔐 Admin sees all
+    if "Gameplan Admin" not in roles:
+
+        member = frappe.db.get_value(
+            "PMA Member",
+            {"user": user},
+            "name"
+        )
+
+        if not member:
+            frappe.throw("Not permitted")
+
+        is_member = frappe.db.exists(
+            "PMA Space Member",
+            {
+                "parent": space,
+                "member": member
+            }
+        )
+
+        if not is_member:
+            frappe.throw("You are not a member of this space")
 
     posts = frappe.get_all(
         "PMA Post",
@@ -762,9 +815,9 @@ def get_space_posts(space, limit=20):
         limit=limit
     )
 
+    # enrich same as global
     for p in posts:
 
-        # Attachments
         p.attachments = frappe.get_all(
             "PMA Post Attachment",
             filters={
@@ -774,7 +827,6 @@ def get_space_posts(space, limit=20):
             fields=["file", "file_name", "file_type"]
         )
 
-        # Author full name
         try:
             user_doc = frappe.get_cached_doc("User", p.author)
             p.author_name = (
@@ -782,16 +834,16 @@ def get_space_posts(space, limit=20):
                 or user_doc.first_name
                 or p.author
             )
-        except frappe.DoesNotExistError:
+        except:
             p.author_name = p.author
 
-        # Comment count
         p.comment_count = frappe.db.count(
             "PMA Post Comment",
             {"post": p.name}
         )
 
     return posts
+
 
 
 @frappe.whitelist()
@@ -983,6 +1035,52 @@ def create_task(data):
         send_task_assignment_email(task)
 
     return task.name
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_assignable_members(doctype, txt, searchfield, start, page_len, filters):
+
+    user = frappe.session.user
+    roles = frappe.get_roles(user)
+
+    # Admin → can see all members
+    if "Gameplan Admin" in roles:
+        return frappe.db.sql("""
+            SELECT name, full_name
+            FROM `tabPMA Member`
+            WHERE full_name LIKE %(txt)s
+            ORDER BY full_name
+            LIMIT %(start)s, %(page_len)s
+        """, {
+            "txt": f"%{txt}%",
+            "start": start,
+            "page_len": page_len
+        })
+
+    # Member → only see members of selected space
+    space = filters.get("space")
+
+    if not space:
+        return []
+
+    return frappe.db.sql("""
+        SELECT pm.name, pm.full_name
+        FROM `tabPMA Space Member` sm
+        JOIN `tabPMA Member` pm ON pm.name = sm.member
+        WHERE sm.parent = %(space)s
+          AND pm.full_name LIKE %(txt)s
+        ORDER BY pm.full_name
+        LIMIT %(start)s, %(page_len)s
+    """, {
+        "space": space,
+        "txt": f"%{txt}%",
+        "start": start,
+        "page_len": page_len
+    })
+
+
+
 
 def send_task_assignment_email(task):
 
