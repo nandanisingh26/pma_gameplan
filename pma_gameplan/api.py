@@ -892,7 +892,7 @@ def remove_space_member(space, member):
 
 
 @frappe.whitelist(allow_guest=True)
-def register_pma_member(**data):
+def register_gameplan_member(**data):
     email = (data.get("email") or "").lower().strip()
 
     if "@" not in email:
