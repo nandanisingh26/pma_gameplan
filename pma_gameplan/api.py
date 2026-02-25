@@ -1095,25 +1095,26 @@ def send_task_assignment_email(task):
         recipients=[user_email],
         subject=f"You have been assigned a new task: {task.title}",
         message=f"""
-        <p>Hello,</p>
+<p>Hello,</p>
 
-        <p>You have been assigned a new task:</p>
+<p>You have been assigned a new task:</p>
 
-        <ul>
-            <li><strong>Title:</strong> {task.title}</li>
-            <li><strong>Description:</strong> {task.description}<li>
-            <li><strong>Priority:</strong> {task.priority}</li>
-            <li><strong>Status:</strong> {task.status}</li>
-            <li><strong>Start Date:</strong> {task.start_date}</li>
-            <li><strong>End Date:</strong> {task.end_date}</li>
-        </ul>
+<ul>
+    <li><strong>Title:</strong> {task.title}</li>
+    <li><strong>Description:</strong> {task.description}</li>
+    <li><strong>Priority:</strong> {task.priority}</li>
+    <li><strong>Status:</strong> {task.status}</li>
+    <li><strong>Start Date:</strong> {task.start_date}</li>
+    <li><strong>End Date:</strong> {task.end_date}</li>
+</ul>
 
-        <p>
-            <a href="{task_url}">Click here to view the task</a>
-        </p>
+<p>a
+    <a href="{task_url}">Click here to vieaw the task</a>
+</p>
 
-        <p>Regards,<br>PMA Gameplan</p>
-        """
+<p>Regards,<br>PMA Gameplan</p>
+"""
+
     )
 
 
